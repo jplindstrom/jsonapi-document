@@ -9,9 +9,26 @@ version 0.1
 # SYNOPSIS
 
     use JSONAPI::Document;
+    use DBIx::Class::Schema;
+
     my $jsonapi = JSONAPI::Document->new();
     my $schema = DBIx::Class::Schema->connect(['dbi:SQLite:dbname=:memory:', '', '']);
-    my $doc = $jsonapi->resource_document($schema->resultset('User')->find(1));
+    my $user = $schema->resultset('User')->find(1);
+
+    # Builds a simple JSON API document, without any relationships
+    my $doc = $jsonapi->resource_document($user);
+
+    # Same but with all relationships
+    my $doc = $jsonapi->resource_document($user, { with_relationships => 1 });
+
+    # With only the author relationship
+    my $doc = $jsonapi->resource_document($user, { with_relationships => 1, relationships => ['author'] });
+
+    # Fully blown resource document with all relationships and their attributes
+    my $doc = $jsonapi->compound_resource_document($user);
+
+    # Multiple resource documents
+    my $docs = $jsonapi->resource_documents($schema->resultset('User'));
 
 # DESCRIPTION
 
@@ -24,6 +41,8 @@ JSON API documents require that you define the type of a document, which this
 library does using the [source\_name](https://metacpan.org/pod/DBIx::Class::ResultSource#source_name)
 of the result row. The type is also pluralised using [Linua::EN::Inflexion](https://metacpan.org/pod/Lingua::EN::Inflexion)
 while keeping relationship names intact (i.e. an 'author' relationship will still be called 'author', with the type 'authors').
+
+# METHODS
 
 ## compound\_resource\_document(_DBIx::Class::Row_ $row, _HashRef_ $options)
 
