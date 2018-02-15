@@ -7,8 +7,9 @@ use Test::JSONAPI;
 
 my $t = Test::JSONAPI->new();
 
-ok($t->can('resource_document'), 'role imports resource_document method');
-ok($t->can('related_resource_documents'), 'role imports related_resource_document method');
+ok($t->can('resource_document'), 'provides resource_document method');
+ok($t->can('resource_documents'), 'provides resource_documents method');
+ok($t->can('compound_resource_document'), 'provides compound_resource_document method');
 
 my $post = $t->schema->resultset('Post')->find(1);
 my $doc = $t->resource_document($post, { with_relationships => 1 });

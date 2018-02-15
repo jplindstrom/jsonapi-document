@@ -1,6 +1,6 @@
 # NAME
 
-JSONAPI::Role - Moose role to build JSON API data structures
+JSONAPI::Document - Turn DBIx results into JSON API documents.
 
 # VERSION
 
@@ -8,23 +8,22 @@ version 0.1
 
 # SYNOPSIS
 
-    # Define your class
-    package FooMaster;
-    use Moose;
-    use DBIx::Class:Schema;
-    with 'JSONAPI::Role';
-
-    __PACKAGE__->meta->make_immutable();
-
-    # Then elsewhere:
-    my $foo = FooMaster->new();
+    use JSONAPI::Document;
+    my $jsonapi = JSONAPI::Document->new();
     my $schema = DBIx::Class::Schema->connect(['dbi:SQLite:dbname=:memory:', '', '']);
-    my $doc = $foo->resource_document($schema->resultset('User')->find(1));
+    my $doc = $jsonapi->resource_document($schema->resultset('User')->find(1));
 
 # DESCRIPTION
 
-This is a plug-and-play role that builds data structures according
+This is a plug-and-play Moo class that builds data structures according
 to the [JSON API](http://jsonapi.org/format/) specification.
+
+# NOTES
+
+JSON API documents require that you define the type of a document, which this
+library does using the [source\_name](https://metacpan.org/pod/DBIx::Class::ResultSource#source_name)
+of the result row. The type is also pluralised using [Linua::EN::Inflexion](https://metacpan.org/pod/Lingua::EN::Inflexion)
+while keeping relationship names intact (i.e. an 'author' relationship will still be called 'author', with the type 'authors').
 
 ## compound\_resource\_document(_DBIx::Class::Row_ $row, _HashRef_ $options)
 
@@ -37,12 +36,15 @@ The following options can be given:
 
     An array reference specifying inclusion of a subset of relationships.
     By default all the relationships will be included, use this if you
-    only want a subset of relationships (i.e. when you're using the
-    `includes` query parameter).
+    only want a subset of relationships (e.g. when accepting the `includes`
+    query parameter in your application routes).
 
 ## resource\_document(_DBIx::Class::Row_ $row, _HashRef_ $options)
 
-Builds a JSON API resource document for the given result row.
+Builds a single resource document for the given result row. Will optionally
+include relationships that contain resource identifiers.
+
+View the resource document specification [here](http://jsonapi.org/format/#document-resource-objects).
 
 The following options can be given:
 
@@ -56,14 +58,8 @@ The following options can be given:
     If `with_relationships` is true, this optional array ref can be
     provided to include a subset of relations instead of all of them.
 
-## related\_resource\_documents(_DBIx::Class::Row_ $row, _Str_ $relation, _HashRef_ $options)
+## resource\_documents(_DBIx::Class::Row_ $row, _HashRef_ $options)
 
-Given the resource document $row, will call the $relation method and return an _ArrayRef_ of
-related documents. Will introspect the relationship to find out whether it is a `has_many` or `belongs_to`
-relationship and return an array reference of either the single or multiple relationships.
+Builds the structure for multiple resource documents with a given resultset.
 
-The following options can be given:
-
-- `with_attributes` _Bool_
-
-    If true, will include the attributes of the relationship for each resulting row.
+See `resource_document` for a list of options.

@@ -1,6 +1,6 @@
 package JSONAPI::Document;
 
-# ABSTRACT: Turns DBIx results into JSON API documents.
+# ABSTRACT: Turn DBIx results into JSON API documents.
 
 use Moo;
 
@@ -16,7 +16,7 @@ sub compound_resource_document {
         data => [ $document ],
         included => [
             map {
-                @{ $self->related_resource_documents($row, $_, { with_attributes => 1 }) }
+                @{ $self->_related_resource_documents($row, $_, { with_attributes => 1 }) }
             } @{$options->{includes} // []} || $row->result_source->relationships(),
         ]
     };
@@ -55,7 +55,7 @@ sub resource_document {
         my @relations = @{$options->{relationships} // []} || $row->result_source->relationships();
         foreach my $rel ( @relations ) {
             if ( $row->has_relationship($rel) ) {
-                my $docs = $self->related_resource_documents($row, $rel);
+                my $docs = $self->_related_resource_documents($row, $rel);
                 $docs = $docs->[0] if ( scalar(@$docs) == 1 );
                 $relationships{$rel} = { data => $docs };
             }
@@ -75,7 +75,7 @@ sub resource_document {
     return \%document;
 }
 
-sub related_resource_documents {
+sub _related_resource_documents {
     my ($self, $row, $relation, $options) = @_;
     $options //= {};
 
@@ -119,27 +119,26 @@ __END__
 
 =head1 NAME
 
-JSONAPI::Role - Moose role to build JSON API data structures
+JSONAPI::Document - Turn DBIx results into JSON API documents.
 
 =head1 SYNOPSIS
 
-    # Define your class
-    package FooMaster;
-    use Moose;
-    use DBIx::Class:Schema;
-    with 'JSONAPI::Role';
-
-    __PACKAGE__->meta->make_immutable();
-
-    # Then elsewhere:
-    my $foo = FooMaster->new();
+    use JSONAPI::Document;
+    my $jsonapi = JSONAPI::Document->new();
     my $schema = DBIx::Class::Schema->connect(['dbi:SQLite:dbname=:memory:', '', '']);
-    my $doc = $foo->resource_document($schema->resultset('User')->find(1));
+    my $doc = $jsonapi->resource_document($schema->resultset('User')->find(1));
 
 =head1 DESCRIPTION
 
-This is a plug-and-play role that builds data structures according
+This is a plug-and-play Moo class that builds data structures according
 to the L<JSON API|http://jsonapi.org/format/> specification.
+
+=head1 NOTES
+
+JSON API documents require that you define the type of a document, which this
+library does using the L<source_name|https://metacpan.org/pod/DBIx::Class::ResultSource#source_name>
+of the result row. The type is also pluralised using L<Linua::EN::Inflexion|https://metacpan.org/pod/Lingua::EN::Inflexion>
+while keeping relationship names intact (i.e. an 'author' relationship will still be called 'author', with the type 'authors').
 
 =head2 compound_resource_document(I<DBIx::Class::Row> $row, I<HashRef> $options)
 
@@ -154,14 +153,17 @@ The following options can be given:
 
 An array reference specifying inclusion of a subset of relationships.
 By default all the relationships will be included, use this if you
-only want a subset of relationships (i.e. when you're using the
-C<includes> query parameter).
+only want a subset of relationships (e.g. when accepting the C<includes>
+query parameter in your application routes).
 
 =back
 
 =head2 resource_document(I<DBIx::Class::Row> $row, I<HashRef> $options)
 
-Builds a JSON API resource document for the given result row.
+Builds a single resource document for the given result row. Will optionally
+include relationships that contain resource identifiers.
+
+View the resource document specification L<here|http://jsonapi.org/format/#document-resource-objects>.
 
 The following options can be given:
 
@@ -179,20 +181,10 @@ provided to include a subset of relations instead of all of them.
 
 =back
 
-=head2 related_resource_documents(I<DBIx::Class::Row> $row, I<Str> $relation, I<HashRef> $options)
+=head2 resource_documents(I<DBIx::Class::Row> $row, I<HashRef> $options)
 
-Given the resource document $row, will call the $relation method and return an I<ArrayRef> of
-related documents. Will introspect the relationship to find out whether it is a C<has_many> or C<belongs_to>
-relationship and return an array reference of either the single or multiple relationships.
+Builds the structure for multiple resource documents with a given resultset.
 
-The following options can be given:
-
-=over
-
-=item C<with_attributes> I<Bool>
-
-If true, will include the attributes of the relationship for each resulting row.
-
-=back
+See C<resource_document> for a list of options.
 
 =cut
