@@ -16,8 +16,9 @@ sub compound_resource_document {
     my @includes;
     my @relationships =
       @{ $options->{includes} // [] } || $row->result_source->relationships();
-    foreach my $relation (sort @relationships) {
-        my $result = $self->_related_resource_documents( $row, $relation, { with_attributes => 1 } );
+    foreach my $relation ( sort @relationships ) {
+        my $result = $self->_related_resource_documents( $row, $relation,
+            { with_attributes => 1 } );
         if ($result) {
             push @includes, @$result;
         }
@@ -53,13 +54,15 @@ sub resource_document {
     my $id      = delete $columns{id} // $row->id;
 
     unless ( $type && $id ) {
+
         # Document is not valid without a type and id.
         return undef;
     }
 
     my %relationships;
     if ( $options->{with_relationships} ) {
-        my @relations = @{ $options->{relationships} // [] } || $row->result_source->relationships();
+        my @relations = @{ $options->{relationships} // [] }
+          || $row->result_source->relationships();
         foreach my $rel (@relations) {
             if ( $row->has_relationship($rel) ) {
                 my $docs = $self->_related_resource_documents( $row, $rel );
@@ -100,7 +103,9 @@ sub _related_resource_documents {
             push @results,
               {
                 id   => delete $attributes{id} // $rel_row->id,
-                type => Lingua::EN::Inflexion::noun( lc( $rel_row->result_source->source_name()) )->plural,
+                type => Lingua::EN::Inflexion::noun(
+                    lc( $rel_row->result_source->source_name() )
+                )->plural,
                 values(%attributes) ? ( attributes => \%attributes ) : (),
               };
         }
@@ -112,7 +117,9 @@ sub _related_resource_documents {
         push @results,
           {
             id   => $id,
-            type => Lingua::EN::Inflexion::noun( lc( $row->$relation->result_source->source_name()) )->plural,
+            type => Lingua::EN::Inflexion::noun(
+                lc( $row->$relation->result_source->source_name() )
+            )->plural,
             $options->{with_attributes} ? ( attributes => \%attributes ) : (),
           };
     }
@@ -170,6 +177,27 @@ while keeping relationship names intact (i.e. an 'author' relationship will stil
 
 =head2 compound_resource_document(I<DBIx::Class::Row> $row, I<HashRef> $options)
 
+Returns a I<HashRef> with the following structure:
+
+	{
+		data => [
+			{
+				id => 1,
+				type => 'authors',
+				attributes => {},
+				relationships => {},
+			}
+		],
+		included => [
+			{
+				id => 1,
+				type => 'posts',
+				attributes => { ... },
+			},
+			...
+		]
+	}
+
 A compound document is one that includes the resource object
 along with the data of all its relationships.
 
@@ -187,6 +215,15 @@ query parameter in your application routes).
 =back
 
 =head2 resource_document(I<DBIx::Class::Row> $row, I<HashRef> $options)
+
+Returns a I<HashRef> with the following structure:
+
+	{
+		id => 1,
+		type => 'authors',
+		attributes => {},
+		relationships => {},
+	}
 
 Builds a single resource document for the given result row. Will optionally
 include relationships that contain resource identifiers.
@@ -210,6 +247,20 @@ provided to include a subset of relations instead of all of them.
 =back
 
 =head2 resource_documents(I<DBIx::Class::Row> $row, I<HashRef> $options)
+
+Returns a I<HashRef> with the following structure:
+
+	{
+		data => [
+			{
+				id => 1,
+				type => 'authors',
+				attributes => {},
+				relationships => {},
+			},
+			...
+		]
+	}
 
 Builds the structure for multiple resource documents with a given resultset.
 

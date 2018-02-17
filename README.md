@@ -4,7 +4,7 @@ JSONAPI::Document - Turn DBIx results into JSON API documents.
 
 # VERSION
 
-version 0.1
+version 0.2
 
 # SYNOPSIS
 
@@ -46,6 +46,27 @@ while keeping relationship names intact (i.e. an 'author' relationship will stil
 
 ## compound\_resource\_document(_DBIx::Class::Row_ $row, _HashRef_ $options)
 
+Returns a _HashRef_ with the following structure:
+
+        {
+                data => [
+                        {
+                                id => 1,
+                                type => 'authors',
+                                attributes => {},
+                                relationships => {},
+                        }
+                ],
+                included => [
+                        {
+                                id => 1,
+                                type => 'posts',
+                                attributes => { ... },
+                        },
+                        ...
+                ]
+        }
+
 A compound document is one that includes the resource object
 along with the data of all its relationships.
 
@@ -59,6 +80,15 @@ The following options can be given:
     query parameter in your application routes).
 
 ## resource\_document(_DBIx::Class::Row_ $row, _HashRef_ $options)
+
+Returns a _HashRef_ with the following structure:
+
+        {
+                id => 1,
+                type => 'authors',
+                attributes => {},
+                relationships => {},
+        }
 
 Builds a single resource document for the given result row. Will optionally
 include relationships that contain resource identifiers.
@@ -78,6 +108,20 @@ The following options can be given:
     provided to include a subset of relations instead of all of them.
 
 ## resource\_documents(_DBIx::Class::Row_ $row, _HashRef_ $options)
+
+Returns a _HashRef_ with the following structure:
+
+        {
+                data => [
+                        {
+                                id => 1,
+                                type => 'authors',
+                                attributes => {},
+                                relationships => {},
+                        },
+                        ...
+                ]
+        }
 
 Builds the structure for multiple resource documents with a given resultset.
 
