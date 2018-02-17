@@ -16,7 +16,7 @@ sub compound_resource_document {
     my @includes;
     my @relationships =
       @{ $options->{includes} // [] } || $row->result_source->relationships();
-    foreach my $relation (@relationships) {
+    foreach my $relation (sort @relationships) {
         my $result = $self->_related_resource_documents( $row, $relation, { with_attributes => 1 } );
         if ($result) {
             push @includes, @$result;
