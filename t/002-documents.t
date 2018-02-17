@@ -12,9 +12,8 @@ ok($t->can('resource_documents'), 'provides resource_documents method');
 ok($t->can('compound_resource_document'), 'provides compound_resource_document method');
 
 my $post = $t->schema->resultset('Post')->find(1);
-my $doc = $t->resource_document($post, { with_relationships => 1 });
 
-is_deeply($doc, {
+is_deeply($t->resource_document($post, { with_relationships => 1 }), {
     id => 1,
     type => 'posts',
     attributes => {
@@ -33,7 +32,7 @@ is_deeply($doc, {
             ]
         }
     }
-}, 'created document with relationships') or diag(explain($doc));
+}, 'created document with relationships');
 
 is_deeply(
     $t->compound_resource_document($post),
@@ -89,8 +88,7 @@ is_deeply(
             },
         ]
     },
-    'compound document structure'
-);
+    'compound document structure');
 
 is_deeply(
     $t->resource_documents($t->schema->resultset('Comment')),
@@ -118,7 +116,6 @@ is_deeply(
             },
         ]
     },
-    'resource documents'
-);
+    'resource documents');
 
 done_testing;
