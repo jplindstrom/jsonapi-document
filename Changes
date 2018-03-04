@@ -1,7 +1,13 @@
 {{$NEXT}}
 
+0.4       2018-03-04 12:50:37+00:00 UTC
+- Optional 'kebab_case_attrs' and 'attributes_via' attributes
+- Less strict type check for row object
+
 0.3       2018-02-18 13:02:29+00:00 UTC
+- Pin dependency Test::DBIx::Class to 0.52
 
 0.2       2018-02-17 18:19:50+00:00 UTC
+- Update dzil prereqs
 
 0.1       2018-02-17 01:57:42+00:00 UTC
