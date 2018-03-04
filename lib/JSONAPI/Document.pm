@@ -48,8 +48,7 @@ sub resource_documents {
 
 sub resource_document {
     my ( $self, $row, $options ) = @_;
-    Carp::confess('No row provided or not a DBIx::Class:Row instance')
-      unless $row && $row->isa('DBIx::Class::Row');
+    Carp::confess('No row provided') unless $row;
 
     $options //= {};
     my $attrs_method       = $options->{attributes_via} // $self->attributes_via;
@@ -217,7 +216,7 @@ L<get_inflated_columns|https://metacpan.org/pod/DBIx::Class::Row#get_inflated_co
 
 =head1 METHODS
 
-=head2 compound_resource_document(I<DBIx::Class::Row> $row, I<HashRef> $options)
+=head2 compound_resource_document(I<DBIx::Class::Row|Object> $row, I<HashRef> $options)
 
 A compound document is one that includes the resource object
 along with the data of all its relationships.
@@ -256,7 +255,7 @@ query parameter in your application routes).
 
 =back
 
-=head2 resource_document(I<DBIx::Class::Row> $row, I<HashRef> $options)
+=head2 resource_document(I<DBIx::Class::Row|Object> $row, I<HashRef> $options)
 
 Builds a single resource document for the given result row. Will optionally
 include relationships that contain resource identifiers.
@@ -288,7 +287,7 @@ provided to include a subset of relations instead of all of them.
 
 =back
 
-=head2 resource_documents(I<DBIx::Class::Row> $row, I<HashRef> $options)
+=head2 resource_documents(I<DBIx::Class::Row|Object> $row, I<HashRef> $options)
 
 Builds the structure for multiple resource documents with a given resultset.
 
