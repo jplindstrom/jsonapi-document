@@ -19,7 +19,7 @@ is_deeply($t->resource_document($post, { with_relationships => 1 }), {
     attributes => {
         author_id => 1,
         description => 'This is a Perl transformer for the JSON API specification',
-        title => 'Intro to JSON API Role',
+        title => 'Intro to JSON API',
     },
     relationships => {
         author => {
@@ -43,7 +43,7 @@ is_deeply(
             attributes => {
                 author_id => 1,
                 description => 'This is a Perl transformer for the JSON API specification',
-                title => 'Intro to JSON API Role',
+                title => 'Intro to JSON API',
             },
             relationships => {
                 author => {

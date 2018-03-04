@@ -18,7 +18,7 @@ subtest 'schema is populated' => sub {
     is($comments->first()->likes, 2, 'first comment is correct');
 
     ok($author->posts, 'author has posts');
-    is($author->posts->first->title, 'Intro to JSON API Role', 'authors first post is correct');
+    is($author->posts->first->title, 'Intro to JSON API', 'authors first post is correct');
 
     ok($comments->first->post, 'comment has one post');
     ok($comments->first->author, 'comment has one author');
