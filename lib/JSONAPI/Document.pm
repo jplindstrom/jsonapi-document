@@ -17,6 +17,14 @@ has attributes_via => (
     default => sub { 'get_inflated_columns' },
 );
 
+has api_url => (
+    is  => 'ro',
+    isa => sub {
+        Carp::croak('api_url should be an absolute url') unless $_[0] =~ m/^http/;
+    },
+    required => 1,
+);
+
 sub compound_resource_document {
     my ( $self, $row, $options ) = @_;
 
@@ -27,8 +35,12 @@ sub compound_resource_document {
       @{ $options->{includes} // [] } || $row->result_source->relationships();
     foreach my $relation ( sort @relationships ) {
         my $result = $self->_related_resource_documents( $row, $relation, { with_attributes => 1 } );
-        if ($result) {
-            push @includes, @$result;
+        if (my $related_docs = $result->{data}) {
+            if (ref($related_docs) eq 'ARRAY') { # plural relations
+                push @includes, @$related_docs;
+            } else { # singular relations
+                push @includes, $related_docs;
+            }
         }
     }
 
@@ -53,6 +65,7 @@ sub resource_document {
     $options //= {};
     my $attrs_method       = $options->{attributes_via} // $self->attributes_via;
     my $with_kebab_case    = $options->{kebab_case_attrs} // $self->kebab_case_attrs;
+    my $with_attributes    = $options->{with_attributes};
     my $with_relationships = $options->{with_relationships};
     my $includes           = $options->{includes};
 
@@ -63,9 +76,7 @@ sub resource_document {
     my $id      = delete $columns{id} // $row->id;
 
     unless ( $type && $id ) {
-
-        # Document is not valid without a type and id.
-        return undef;
+        return undef; # Document is not valid without a type and id.
     }
 
     my %relationships;
@@ -73,9 +84,11 @@ sub resource_document {
         my @relations = $includes ? @$includes : $row->result_source->relationships();
         foreach my $rel (@relations) {
             if ( $row->has_relationship($rel) ) {
-                my $docs = $self->_related_resource_documents( $row, $rel, $options );
-                $docs = $docs->[0] if ( scalar(@$docs) == 1 );
-                $relationships{$rel} = { data => $docs };
+                if ($with_attributes) {
+                    $relationships{$rel} = $self->_related_resource_documents( $row, $rel, $options );
+                } else {
+                    $relationships{$rel} = $self->_related_resource_links($row, $noun, $rel, $options);
+                }
             }
         }
     }
@@ -97,12 +110,37 @@ sub resource_document {
     return \%document;
 }
 
+sub _related_resource_links {
+    my ($self, $row, $row_noun, $relation, $options) = @_;
+    my $relation_row = $row->$relation;
+    my $relation_noun = Lingua::EN::Inflexion::noun( lc( $relation_row->result_source->source_name() ) );
+
+    my $data;
+    my $rel_info = $row->result_source->relationship_info($relation);
+    if ( $rel_info->{attrs}->{accessor} eq 'multi' ) {
+        $data = [];
+        my @rs = $relation_row->all();
+        foreach my $rel_row (@rs) {
+            push @$data, { id => $rel_row->id, type => $relation_noun->plural };
+        }
+    } else {
+        $data = {
+            id      => $relation_row->id,
+            type    => $relation_noun->plural,
+        }
+    }
+
+    return {
+        links => {
+            self => $self->api_url . '/' . $row_noun->plural . '/' . $row->id . "/relationships/$relation",
+        },
+        data => $data,
+    };
+}
+
 sub _related_resource_documents {
     my ( $self, $row, $relation, $options ) = @_;
     $options //= {};
-    my $with_attributes = $options->{with_attributes};
-    my $with_kebab_case = $options->{kebab_case_attrs} // $self->kebab_case_attrs;
-    my $attrs_method    = $options->{attributes_via} // $self->attributes_via;
 
     my @results;
 
@@ -110,36 +148,34 @@ sub _related_resource_documents {
     if ( $rel_info->{attrs}->{accessor} eq 'multi' ) {
         my @rs = $row->$relation->all();
         foreach my $rel_row (@rs) {
-            my %attributes;
-            if ($with_attributes) {
-                %attributes = $rel_row->$attrs_method();
-            }
-            if ($with_kebab_case) {
-                %attributes = _kebab_case(%attributes);
-            }
-
-            push @results,
-              {
-                id   => delete $attributes{id} // $rel_row->id,
-                type => Lingua::EN::Inflexion::noun( lc( $rel_row->result_source->source_name() ) )->plural,
-                values(%attributes) ? ( attributes => \%attributes ) : (),
-              };
+            push @results, $self->_relation_with_attributes($rel_row, $options);
+        }
+        return {
+            data => \@results,
         }
     }
     else {
-        my %attributes = $row->$relation->$attrs_method();
-        if ($with_kebab_case) {
-            %attributes = _kebab_case(%attributes);
+        return {
+            data => $self->_relation_with_attributes($row->$relation, $options)
         }
-        push @results,
-          {
-            id   => delete $attributes{id} // $row->$relation->id,
-            type => Lingua::EN::Inflexion::noun( lc( $row->$relation->result_source->source_name() ) )->plural,
-            $with_attributes ? ( attributes => \%attributes ) : (),
-          };
+    }
+}
+
+sub _relation_with_attributes {
+    my ($self, $row, $options) = @_;
+    my $with_kebab_case = $options->{kebab_case_attrs} // $self->kebab_case_attrs;
+    my $attrs_method    = $options->{attributes_via} // $self->attributes_via;
+
+    my %attributes = $row->$attrs_method();
+    if ($with_kebab_case) {
+        %attributes = _kebab_case(%attributes);
     }
 
-    return \@results;
+    return {
+        id   => delete $attributes{id} // $row->id,
+        type => Lingua::EN::Inflexion::noun( lc( $row->result_source->source_name() ) )->plural,
+        attributes => \%attributes,
+    };
 }
 
 sub _kebab_case {
@@ -168,7 +204,7 @@ JSONAPI::Document - Turn DBIx results into JSON API documents.
     use JSONAPI::Document;
     use DBIx::Class::Schema;
 
-    my $jsonapi = JSONAPI::Document->new();
+    my $jsonapi = JSONAPI::Document->new({ api_url => 'http://example.com/api' });
     my $schema = DBIx::Class::Schema->connect(['dbi:SQLite:dbname=:memory:', '', '']);
     my $user = $schema->resultset('User')->find(1);
 
@@ -200,6 +236,10 @@ of the result row. The type is also pluralised using L<Linua::EN::Inflexion|http
 while keeping relationship names intact (i.e. an 'author' relationship will still be called 'author', with the type 'authors').
 
 =head1 ATTRIBUTES
+
+=head2 api_url
+
+Required; An absolute URL pointing to your servers JSON API namespace.
 
 =head2 kebab_case_attrs
 
@@ -279,6 +319,14 @@ The following options can be given:
 
 If true, will introspect the rows relationships and include each
 of them in the relationships key of the document.
+
+=item C<with_attributes> I<Bool>
+
+If C<with_relationships> is true, for each resulting row of a relationship,
+the attributes of that relation will be included.
+
+By default, each relationship will contain a L<links object|http://jsonapi.org/format/#document-links>.
+If this option is true, links object will be replaced with attributes.
 
 =item C<includes> I<ArrayRef>
 

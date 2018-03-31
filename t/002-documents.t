@@ -5,7 +5,7 @@ use lib 't/lib';
 use Test::Most;
 use Test::JSONAPI;
 
-my $t = Test::JSONAPI->new();
+my $t = Test::JSONAPI->new({ api_url => 'http://example.com/api' });
 
 ok( $t->can('resource_document'),          'provides resource_document method' );
 ok( $t->can('resource_documents'),         'provides resource_documents method' );
@@ -25,9 +25,11 @@ is_deeply(
         },
         relationships => {
             author => {
+				links => { self => 'http://example.com/api/posts/1/relationships/author' },
                 data => { type => 'authors', id => 1, }
             },
             comments => {
+				links => { self => 'http://example.com/api/posts/1/relationships/comments' },
                 data => [ { type => 'comments', id => 1, }, { type => 'comments', id => 2, }, ]
             }
         }
@@ -49,9 +51,11 @@ is_deeply(
                 },
                 relationships => {
                     author => {
+						links => { self => 'http://example.com/api/posts/1/relationships/author' },
                         data => { type => 'authors', id => 1, }
                     },
                     comments => {
+						links => { self => 'http://example.com/api/posts/1/relationships/comments' },
                         data => [ { type => 'comments', id => 1, }, { type => 'comments', id => 2, }, ]
                     }
                 }

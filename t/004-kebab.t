@@ -5,7 +5,7 @@ use lib 't/lib';
 use Test::Most;
 use Test::JSONAPI;
 
-my $t = Test::JSONAPI->new( { kebab_case_attrs => 1 } );
+my $t = Test::JSONAPI->new( { api_url => 'http://example.com/api', kebab_case_attrs => 1 } );
 
 my $post = $t->schema->resultset('Post')->find(1);
 

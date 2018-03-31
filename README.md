@@ -4,14 +4,14 @@ JSONAPI::Document - Turn DBIx results into JSON API documents.
 
 # VERSION
 
-version 0.4
+version 0.5
 
 # SYNOPSIS
 
     use JSONAPI::Document;
     use DBIx::Class::Schema;
 
-    my $jsonapi = JSONAPI::Document->new();
+    my $jsonapi = JSONAPI::Document->new({ api_url => 'http://example.com/api' });
     my $schema = DBIx::Class::Schema->connect(['dbi:SQLite:dbname=:memory:', '', '']);
     my $user = $schema->resultset('User')->find(1);
 
@@ -43,6 +43,10 @@ of the result row. The type is also pluralised using [Linua::EN::Inflexion](http
 while keeping relationship names intact (i.e. an 'author' relationship will still be called 'author', with the type 'authors').
 
 # ATTRIBUTES
+
+## api\_url
+
+Required; An absolute URL pointing to your servers JSON API namespace.
 
 ## kebab\_case\_attrs
 
@@ -116,6 +120,14 @@ The following options can be given:
 
     If true, will introspect the rows relationships and include each
     of them in the relationships key of the document.
+
+- `with_attributes` _Bool_
+
+    If `with_relationships` is true, for each resulting row of a relationship,
+    the attributes of that relation will be included.
+
+    By default, each relationship will contain a [links object](http://jsonapi.org/format/#document-links).
+    If this option is true, links object will be replaced with attributes.
 
 - `includes` _ArrayRef_
 
