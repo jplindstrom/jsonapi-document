@@ -1,5 +1,8 @@
 {{$NEXT}}
 
+0.7       2018-04-02 21:22:54+00:00 UTC
+- Fixed bug in compound document relationships where the 'includes' option was not taken into account when passed to resource_document
+
 0.6       2018-04-02 01:01:31+00:00 UTC
 - Fixed bug where relationship names and their links were not kebab cased
 - Pluralise the type of relations using their relation name, which is already found, instead of its result source
