@@ -4,7 +4,7 @@ JSONAPI::Document - Turn DBIx results into JSON API documents.
 
 # VERSION
 
-version 0.5
+version 0.6
 
 # SYNOPSIS
 

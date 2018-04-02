@@ -95,6 +95,9 @@ sub resource_document {
 
     if ($with_kebab_case) {
         %columns = _kebab_case(%columns);
+        if ( values(%relationships) ) {
+            %relationships = _kebab_case(%relationships);
+        }
     }
 
     my %document;
@@ -112,8 +115,13 @@ sub resource_document {
 
 sub _related_resource_links {
     my ($self, $row, $row_noun, $relation, $options) = @_;
-    my $relation_row = $row->$relation;
-    my $relation_noun = Lingua::EN::Inflexion::noun( lc( $relation_row->result_source->source_name() ) );
+    my $with_kebab_case = $options->{kebab_case_attrs} // $self->kebab_case_attrs;
+    my $relation_row  	= $row->$relation;
+    my $relation_type 	= $relation;
+
+    if ($with_kebab_case) {
+        $relation_type =~ s/_/-/g;
+    }
 
     my $data;
     my $rel_info = $row->result_source->relationship_info($relation);
@@ -121,18 +129,18 @@ sub _related_resource_links {
         $data = [];
         my @rs = $relation_row->all();
         foreach my $rel_row (@rs) {
-            push @$data, { id => $rel_row->id, type => $relation_noun->plural };
+            push @$data, { id => $rel_row->id, type => $relation_type };
         }
     } else {
         $data = {
             id      => $relation_row->id,
-            type    => $relation_noun->plural,
-        }
+            type    => Lingua::EN::Inflexion::noun( lc($relation) )->plural,
+        };
     }
 
     return {
         links => {
-            self => $self->api_url . '/' . $row_noun->plural . '/' . $row->id . "/relationships/$relation",
+            self => $self->api_url . '/' . $row_noun->plural . '/' . $row->id . "/relationships/$relation_type",
         },
         data => $data,
     };
@@ -148,7 +156,7 @@ sub _related_resource_documents {
     if ( $rel_info->{attrs}->{accessor} eq 'multi' ) {
         my @rs = $row->$relation->all();
         foreach my $rel_row (@rs) {
-            push @results, $self->_relation_with_attributes($rel_row, $options);
+            push @results, $self->_relation_with_attributes($rel_row, { %$options, relation => $relation, is_multi => 1, });
         }
         return {
             data => \@results,
@@ -156,7 +164,7 @@ sub _related_resource_documents {
     }
     else {
         return {
-            data => $self->_relation_with_attributes($row->$relation, $options)
+            data => $self->_relation_with_attributes($row->$relation, { %$options, relation => $relation, })
         }
     }
 }
@@ -165,15 +173,21 @@ sub _relation_with_attributes {
     my ($self, $row, $options) = @_;
     my $with_kebab_case = $options->{kebab_case_attrs} // $self->kebab_case_attrs;
     my $attrs_method    = $options->{attributes_via} // $self->attributes_via;
+    my $type            = $options->{relation};
+
+    if ( !$options->{is_multi} ) {
+        $type = Lingua::EN::Inflexion::noun( lc( $type ) )->plural;
+    }
 
     my %attributes = $row->$attrs_method();
     if ($with_kebab_case) {
         %attributes = _kebab_case(%attributes);
+        $type =~ s/_/-/g;
     }
 
     return {
         id   => delete $attributes{id} // $row->id,
-        type => Lingua::EN::Inflexion::noun( lc( $row->result_source->source_name() ) )->plural,
+        type => $type,
         attributes => \%attributes,
     };
 }
