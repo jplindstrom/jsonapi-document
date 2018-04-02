@@ -1,5 +1,8 @@
 {{$NEXT}}
 
+0.8       2018-04-02 22:11:49+00:00 UTC
+- Fixed bug where compound document returned 'data' as an ArrayRef when it should be a HashRef
+
 0.7       2018-04-02 21:22:54+00:00 UTC
 - Fixed bug in compound document relationships where the 'includes' option was not taken into account when passed to resource_document
 
