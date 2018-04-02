@@ -46,33 +46,31 @@ is_deeply(
 is_deeply(
     $t->compound_resource_document($post),
     {
-        data => [
-            {
-                id         => 1,
-                type       => 'posts',
-                attributes => {
-                    author_id   => 1,
-                    description => 'This is a Perl transformer for the JSON API specification',
-                    title       => 'Intro to JSON API',
-                },
-                relationships => {
-                    author => {
-                        links => {
-                            self => 'http://example.com/api/posts/1/relationships/author',
-                            related => 'http://example.com/api/posts/1/author'
-                        },
-                        data => { type => 'authors', id => 1, }
-                    },
-                    comments => {
-                        links => {
-                            self => 'http://example.com/api/posts/1/relationships/comments',
-                            related => 'http://example.com/api/posts/1/comments'
-                        },
-                        data => [ { type => 'comments', id => 1, }, { type => 'comments', id => 2, }, ]
-                    }
-                }
-            }
-        ],
+        data => {
+	        id         => 1,
+		    type       => 'posts',
+		    attributes => {
+				author_id   => 1,
+				description => 'This is a Perl transformer for the JSON API specification',
+				title       => 'Intro to JSON API',
+			},
+			relationships => {
+				author => {
+					links => {
+						self => 'http://example.com/api/posts/1/relationships/author',
+						related => 'http://example.com/api/posts/1/author'
+					},
+					data => { type => 'authors', id => 1, }
+				},
+				comments => {
+					links => {
+						self => 'http://example.com/api/posts/1/relationships/comments',
+						related => 'http://example.com/api/posts/1/comments'
+					},
+					data => [ { type => 'comments', id => 1, }, { type => 'comments', id => 2, }, ]
+				}
+			}
+		},
         included => [
             {
                 type       => 'authors',
@@ -139,26 +137,24 @@ is_deeply(
 is_deeply(
     $t->compound_resource_document($post, { includes => [qw/author/] }),
     {
-        data => [
-            {
-                id         => 1,
-                type       => 'posts',
-                attributes => {
-                    author_id   => 1,
-                    description => 'This is a Perl transformer for the JSON API specification',
-                    title       => 'Intro to JSON API',
-                },
-                relationships => {
-                    author => {
-                        links => {
-                            self => 'http://example.com/api/posts/1/relationships/author',
-                            related => 'http://example.com/api/posts/1/author'
-                        },
-                        data => { type => 'authors', id => 1, }
-                    },
-                }
-            }
-        ],
+        data => {
+			id         => 1,
+			type       => 'posts',
+			attributes => {
+				author_id   => 1,
+				description => 'This is a Perl transformer for the JSON API specification',
+				title       => 'Intro to JSON API',
+			},
+			relationships => {
+				author => {
+					links => {
+						self => 'http://example.com/api/posts/1/relationships/author',
+						related => 'http://example.com/api/posts/1/author'
+					},
+					data => { type => 'authors', id => 1, }
+				},
+			}
+		},
         included => [
             {
                 type       => 'authors',

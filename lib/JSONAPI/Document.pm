@@ -48,7 +48,7 @@ sub compound_resource_document {
     }
 
     return {
-        data     => [$document],
+        data     => $document,
         included => \@included,
     };
 }
