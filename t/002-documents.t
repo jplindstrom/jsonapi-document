@@ -25,12 +25,18 @@ is_deeply(
         },
         relationships => {
             author => {
-				links => { self => 'http://example.com/api/posts/1/relationships/author' },
+                links => {
+                    self => 'http://example.com/api/posts/1/relationships/author',
+                    related => 'http://example.com/api/posts/1/author'
+                },
                 data => { type => 'authors', id => 1, }
             },
             comments => {
-				links => { self => 'http://example.com/api/posts/1/relationships/comments' },
-                data => [ { type => 'comments', id => 1, }, { type => 'comments', id => 2, }, ]
+                links => {
+                    self => 'http://example.com/api/posts/1/relationships/comments',
+                    related => 'http://example.com/api/posts/1/comments'
+                },
+               data => [ { type => 'comments', id => 1, }, { type => 'comments', id => 2, }, ]
             }
         }
     },
@@ -51,11 +57,17 @@ is_deeply(
                 },
                 relationships => {
                     author => {
-						links => { self => 'http://example.com/api/posts/1/relationships/author' },
+                        links => {
+                            self => 'http://example.com/api/posts/1/relationships/author',
+                            related => 'http://example.com/api/posts/1/author'
+                        },
                         data => { type => 'authors', id => 1, }
                     },
                     comments => {
-						links => { self => 'http://example.com/api/posts/1/relationships/comments' },
+                        links => {
+                            self => 'http://example.com/api/posts/1/relationships/comments',
+                            related => 'http://example.com/api/posts/1/comments'
+                        },
                         data => [ { type => 'comments', id => 1, }, { type => 'comments', id => 2, }, ]
                     }
                 }
@@ -122,6 +134,43 @@ is_deeply(
         ]
     },
     'resource documents'
+);
+
+is_deeply(
+    $t->compound_resource_document($post, { includes => [qw/author/] }),
+    {
+        data => [
+            {
+                id         => 1,
+                type       => 'posts',
+                attributes => {
+                    author_id   => 1,
+                    description => 'This is a Perl transformer for the JSON API specification',
+                    title       => 'Intro to JSON API',
+                },
+                relationships => {
+                    author => {
+                        links => {
+                            self => 'http://example.com/api/posts/1/relationships/author',
+                            related => 'http://example.com/api/posts/1/author'
+                        },
+                        data => { type => 'authors', id => 1, }
+                    },
+                }
+            }
+        ],
+        included => [
+            {
+                type       => 'authors',
+                id         => 1,
+                attributes => {
+                    name => 'John Doe',
+                    age  => 28,
+                },
+            },
+        ]
+    },
+    'compound document structure with includes'
 );
 
 done_testing;

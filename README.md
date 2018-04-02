@@ -4,7 +4,7 @@ JSONAPI::Document - Turn DBIx results into JSON API documents.
 
 # VERSION
 
-version 0.6
+version 0.7
 
 # SYNOPSIS
 
@@ -71,14 +71,12 @@ along with the data of all its relationships.
 Returns a _HashRef_ with the following structure:
 
     {
-        data => [
-            {
-                id => 1,
-                type => 'authors',
-                attributes => {},
-                relationships => {},
-            }
-        ],
+        data => {
+            id => 1,
+            type => 'authors',
+            attributes => {},
+            relationships => {},
+        },
         included => [
             {
                 id => 1,

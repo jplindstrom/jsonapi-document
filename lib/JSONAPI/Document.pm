@@ -28,25 +28,28 @@ has api_url => (
 sub compound_resource_document {
     my ( $self, $row, $options ) = @_;
 
-    my $document = $self->resource_document( $row, { with_relationships => 1 } );
+    my @relationships = $row->result_source->relationships();
+    if ( $options->{includes} ) {
+        @relationships = @{$options->{includes}};
+    }
 
-    my @includes;
-    my @relationships =
-      @{ $options->{includes} // [] } || $row->result_source->relationships();
+    my $document = $self->resource_document( $row, { with_relationships => 1, includes => \@relationships } );
+
+    my @included;
     foreach my $relation ( sort @relationships ) {
         my $result = $self->_related_resource_documents( $row, $relation, { with_attributes => 1 } );
         if (my $related_docs = $result->{data}) {
             if (ref($related_docs) eq 'ARRAY') { # plural relations
-                push @includes, @$related_docs;
+                push @included, @$related_docs;
             } else { # singular relations
-                push @includes, $related_docs;
+                push @included, $related_docs;
             }
         }
     }
 
     return {
         data     => [$document],
-        included => \@includes,
+        included => \@included,
     };
 }
 
@@ -141,6 +144,7 @@ sub _related_resource_links {
     return {
         links => {
             self => $self->api_url . '/' . $row_noun->plural . '/' . $row->id . "/relationships/$relation_type",
+            related => $self->api_url . '/' . $row_noun->plural . '/' . $row->id . "/$relation_type",
         },
         data => $data,
     };
@@ -278,14 +282,12 @@ along with the data of all its relationships.
 Returns a I<HashRef> with the following structure:
 
     {
-        data => [
-            {
-                id => 1,
-                type => 'authors',
-                attributes => {},
-                relationships => {},
-            }
-        ],
+        data => {
+            id => 1,
+            type => 'authors',
+            attributes => {},
+            relationships => {},
+        },
         included => [
             {
                 id => 1,
