@@ -1,5 +1,9 @@
 {{$NEXT}}
 
+0.6       2018-04-02 01:01:31+00:00 UTC
+- Fixed bug where relationship names and their links were not kebab cased
+- Pluralise the type of relations using their relation name, which is already found, instead of its result source
+
 0.5       2018-03-31 20:52:26+00:00 UTC
 - Required 'api_url' attribute
 - Support for relational link objects
