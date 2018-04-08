@@ -27,16 +27,23 @@ has api_url => (
     required => 1,
 );
 
-has chi => (
+has data_dir => (
     is => 'ro',
-    default => sub {
-        return CHI->new(driver => 'Memory', global => 1);
-    }
+    required => 1,
+);
+
+has chi => (
+    is => 'lazy',
 );
 
 has segmenter => (
     is => 'lazy',
 );
+
+sub _build_chi {
+    my ($self) = @_;
+    return CHI->new(driver => 'File', root_dir => $self->data_dir);
+}
 
 sub _build_segmenter {
     return Lingua::EN::Segment->new;
@@ -280,6 +287,11 @@ while keeping relationship names intact (i.e. an 'author' relationship will stil
 
 =head1 ATTRIBUTES
 
+=head2 data_dir
+
+Required; Directory string where this module can store computed document type strings. This should be
+a directory that's ignored by your VCS.
+
 =head2 api_url
 
 Required; An absolute URL pointing to your servers JSON API namespace.
@@ -354,8 +366,8 @@ View the resource document specification L<here|http://jsonapi.org/format/#docum
 
 Uses L<Lingua::EN::Segment|metacpan.org/pod/Lingua::EN::Segment> to set the appropriate type of the
 document. This is a bit expensive, but it ensures that your schema results source name gets hyphenated
-appropriately when converted into its plural form. The resulting type is cached eternally into memory
-(sorry) to minimize the need to re-compute the document type.
+appropriately when converted into its plural form. The resulting type is cached into the C<data_dir>
+to minimize the need to re-compute the document type.
 
 The following options can be given:
 
