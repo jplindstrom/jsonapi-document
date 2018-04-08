@@ -4,7 +4,7 @@ JSONAPI::Document - Turn DBIx results into JSON API documents.
 
 # VERSION
 
-version 0.8
+version 0.9
 
 # SYNOPSIS
 
@@ -111,6 +111,11 @@ Returns a _HashRef_ with the following structure:
     },
 
 View the resource document specification [here](http://jsonapi.org/format/#document-resource-objects).
+
+Uses [Lingua::EN::Segment](https://metacpan.org/pod/metacpan.org#pod-Lingua::EN::Segment) to set the appropriate type of the
+document. This is a bit expensive, but it ensures that your schema results source name gets hyphenated
+appropriately when converted into its plural form. The resulting type is cached eternally into memory
+(sorry) to minimize the need to re-compute the document type.
 
 The following options can be given:
 

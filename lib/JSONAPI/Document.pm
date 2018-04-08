@@ -4,8 +4,10 @@ package JSONAPI::Document;
 
 use Moo;
 
-use Lingua::EN::Inflexion ();
 use Carp                  ();
+use CHI;
+use Lingua::EN::Inflexion ();
+use Lingua::EN::Segment;
 
 has kebab_case_attrs => (
     is      => 'ro',
@@ -24,6 +26,21 @@ has api_url => (
     },
     required => 1,
 );
+
+has chi => (
+    is => 'ro',
+    default => sub {
+        return CHI->new(driver => 'Memory', global => 1);
+    }
+);
+
+has segmenter => (
+    is => 'lazy',
+);
+
+sub _build_segmenter {
+    return Lingua::EN::Segment->new;
+}
 
 sub compound_resource_document {
     my ( $self, $row, $options ) = @_;
@@ -103,10 +120,18 @@ sub resource_document {
         }
     }
 
+    my $resource_type = $self->chi->compute($noun->plural, undef, sub {
+        my @words = $self->segmenter->segment($noun->plural);
+        unless ( @words > 0 ) {
+            @words = ($noun->plural);
+        }
+        return join('-', @words);
+    });
+
     my %document;
 
     $document{id}         = $id;
-    $document{type}       = $noun->plural;
+    $document{type}       = $resource_type;
     $document{attributes} = \%columns;
 
     if ( values(%relationships) ) {
@@ -119,8 +144,8 @@ sub resource_document {
 sub _related_resource_links {
     my ($self, $row, $row_noun, $relation, $options) = @_;
     my $with_kebab_case = $options->{kebab_case_attrs} // $self->kebab_case_attrs;
-    my $relation_row  	= $row->$relation;
-    my $relation_type 	= $relation;
+    my $relation_row    = $row->$relation;
+    my $relation_type   = $relation;
 
     if ($with_kebab_case) {
         $relation_type =~ s/_/-/g;
@@ -326,6 +351,11 @@ Returns a I<HashRef> with the following structure:
     },
 
 View the resource document specification L<here|http://jsonapi.org/format/#document-resource-objects>.
+
+Uses L<Lingua::EN::Segment|metacpan.org/pod/Lingua::EN::Segment> to set the appropriate type of the
+document. This is a bit expensive, but it ensures that your schema results source name gets hyphenated
+appropriately when converted into its plural form. The resulting type is cached eternally into memory
+(sorry) to minimize the need to re-compute the document type.
 
 The following options can be given:
 
