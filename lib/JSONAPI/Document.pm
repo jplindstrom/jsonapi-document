@@ -120,7 +120,7 @@ sub resource_document {
         }
     }
 
-    my $resource_type = $self->chi->compute($noun->plural, undef, sub {
+    my $resource_type = $self->chi->compute(__PACKAGE__ . ':' . $noun->plural, undef, sub {
         my @words = $self->segmenter->segment($noun->plural);
         unless ( @words > 0 ) {
             @words = ($noun->plural);
