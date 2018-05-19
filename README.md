@@ -4,7 +4,7 @@ JSONAPI::Document - Turn DBIx results into JSON API documents.
 
 # VERSION
 
-version 1.2
+version 1.3
 
 # SYNOPSIS
 
@@ -140,6 +140,22 @@ The following options can be given:
 
     If `with_relationships` is true, this optional array ref can be
     provided to include a subset of relations instead of all of them.
+
+- `fields` _ArrayRef_
+
+    An optional list of attributes to include for the given resource. Implements
+    [sparse fieldsets](http://jsonapi.org/format/#fetching-sparse-fieldsets) in the specification.
+
+    Will pass the array reference to the `attributes_via` method, which should make use
+    of the reference and return **only** those attributes that were requested.
+
+- `related_fields` _HashRef_
+
+    Behaves the same as the `fields` option for relationships, returning only those fields
+    for the related resource that were requested.
+
+    Not specifying sparse fieldsets for a resource implies requesting all attributes for
+    that relationship.
 
 ## resource\_documents(_DBIx::Class::Row|Object_ $row, _HashRef_ $options)
 

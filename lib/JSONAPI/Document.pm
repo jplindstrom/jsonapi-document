@@ -4,7 +4,7 @@ package JSONAPI::Document;
 
 use Moo;
 
-use Carp                  ();
+use Carp ();
 use CHI;
 use Lingua::EN::Inflexion ();
 use Lingua::EN::Segment;
@@ -12,8 +12,7 @@ use List::Util;
 
 has kebab_case_attrs => (
     is      => 'ro',
-    default => sub { 0 }
-);
+    default => sub { 0 });
 
 has attributes_via => (
     is      => 'ro',
@@ -29,17 +28,13 @@ has api_url => (
 );
 
 has data_dir => (
-    is => 'ro',
+    is       => 'ro',
     required => 1,
 );
 
-has chi => (
-    is => 'lazy',
-);
+has chi => (is => 'lazy',);
 
-has segmenter => (
-    is => 'lazy',
-);
+has segmenter => (is => 'lazy',);
 
 sub _build_chi {
     my ($self) = @_;
@@ -51,22 +46,22 @@ sub _build_segmenter {
 }
 
 sub compound_resource_document {
-    my ( $self, $row, $options ) = @_;
+    my ($self, $row, $options) = @_;
 
     my @relationships = $row->result_source->relationships();
-    if ( $options->{includes} ) {
-        @relationships = @{$options->{includes}};
+    if ($options->{includes}) {
+        @relationships = @{ $options->{includes} };
     }
 
-    my $document = $self->resource_document( $row, { with_relationships => 1, includes => \@relationships } );
+    my $document = $self->resource_document($row, { with_relationships => 1, includes => \@relationships });
 
     my @included;
-    foreach my $relation ( sort @relationships ) {
-        my $result = $self->_related_resource_documents( $row, $relation, { with_attributes => 1 } );
+    foreach my $relation (sort @relationships) {
+        my $result = $self->_related_resource_documents($row, $relation, { with_attributes => 1 });
         if (my $related_docs = $result->{data}) {
-            if (ref($related_docs) eq 'ARRAY') { # plural relations
+            if (ref($related_docs) eq 'ARRAY') {    # plural relations
                 push @included, @$related_docs;
-            } else { # singular relations
+            } else {                                # singular relations
                 push @included, $related_docs;
             }
         }
@@ -79,15 +74,15 @@ sub compound_resource_document {
 }
 
 sub resource_documents {
-    my ( $self, $resultset, $options ) = @_;
+    my ($self, $resultset, $options) = @_;
     $options //= {};
 
     my @results = $resultset->all();
-    return { data => [ map { $self->resource_document( $_, $options ) } @results ], };
+    return { data => [map { $self->resource_document($_, $options) } @results], };
 }
 
 sub resource_document {
-    my ( $self, $row, $options ) = @_;
+    my ($self, $row, $options) = @_;
     Carp::confess('No row provided') unless $row;
 
     $options //= {};
@@ -96,27 +91,27 @@ sub resource_document {
     my $with_attributes    = $options->{with_attributes};
     my $with_relationships = $options->{with_relationships};
     my $includes           = $options->{includes};
-    my $fields             = [ grep { $_ } @{$options->{fields} // []} ];
+    my $fields             = [grep { $_ } @{ $options->{fields} // [] }];
 
     $options->{related_fields} //= {};
 
-    my $type = lc( $row->result_source->source_name() );
+    my $type = lc($row->result_source->source_name());
     my $noun = Lingua::EN::Inflexion::noun($type);
 
     my %columns = $row->$attrs_method($fields);
     my $id      = delete $columns{id} // $row->id;
 
-    unless ( $type && $id ) {
-        return undef; # Document is not valid without a type and id.
+    unless ($type && $id) {
+        return undef;    # Document is not valid without a type and id.
     }
 
     my %relationships;
     if ($with_relationships) {
         my @relations = $includes ? @$includes : $row->result_source->relationships();
         foreach my $rel (@relations) {
-            if ( $row->has_relationship($rel) ) {
+            if ($row->has_relationship($rel)) {
                 if ($with_attributes) {
-                    $relationships{$rel} = $self->_related_resource_documents( $row, $rel, $options );
+                    $relationships{$rel} = $self->_related_resource_documents($row, $rel, $options);
                 } else {
                     $relationships{$rel} = $self->_related_resource_links($row, $noun, $rel, $options);
                 }
@@ -126,21 +121,24 @@ sub resource_document {
 
     if ($with_kebab_case) {
         %columns = _kebab_case(%columns);
-        if ( values(%relationships) ) {
+        if (values(%relationships)) {
             %relationships = _kebab_case(%relationships);
         }
     }
 
-    my $resource_type = $self->chi->compute(__PACKAGE__ . ':' . $noun->plural, undef, sub {
-        my @words = $self->segmenter->segment($noun->plural);
-        unless ( @words > 0 ) {
-            @words = ($noun->plural);
-        }
-        return join('-', @words);
-    });
+    my $resource_type = $self->chi->compute(
+        __PACKAGE__ . ':' . $noun->plural,
+        undef,
+        sub {
+            my @words = $self->segmenter->segment($noun->plural);
+            unless (@words > 0) {
+                @words = ($noun->plural);
+            }
+            return join('-', @words);
+        });
 
-    if ( scalar(@$fields) ) {
-        %columns = %{$self->_sparse_attributes({%columns}, $fields)};
+    if (scalar(@$fields)) {
+        %columns = %{ $self->_sparse_attributes({%columns}, $fields) };
     }
 
     my %document;
@@ -149,7 +147,7 @@ sub resource_document {
     $document{type}       = $resource_type;
     $document{attributes} = \%columns;
 
-    if ( values(%relationships) ) {
+    if (values(%relationships)) {
         $document{relationships} = \%relationships;
     }
 
@@ -168,7 +166,7 @@ sub _related_resource_links {
 
     my $data;
     my $rel_info = $row->result_source->relationship_info($relation);
-    if ( $rel_info->{attrs}->{accessor} eq 'multi' ) {
+    if ($rel_info->{attrs}->{accessor} eq 'multi') {
         $data = [];
         my @rs = $relation_row->all();
         foreach my $rel_row (@rs) {
@@ -176,14 +174,14 @@ sub _related_resource_links {
         }
     } else {
         $data = {
-            id      => $relation_row->id,
-            type    => Lingua::EN::Inflexion::noun( lc($relation) )->plural,
+            id   => $relation_row->id,
+            type => Lingua::EN::Inflexion::noun(lc($relation))->plural,
         };
     }
 
     return {
         links => {
-            self => $self->api_url . '/' . $row_noun->plural . '/' . $row->id . "/relationships/$relation_type",
+            self    => $self->api_url . '/' . $row_noun->plural . '/' . $row->id . "/relationships/$relation_type",
             related => $self->api_url . '/' . $row_noun->plural . '/' . $row->id . "/$relation_type",
         },
         data => $data,
@@ -191,25 +189,21 @@ sub _related_resource_links {
 }
 
 sub _related_resource_documents {
-    my ( $self, $row, $relation, $options ) = @_;
+    my ($self, $row, $relation, $options) = @_;
     $options //= {};
 
     my @results;
 
     my $rel_info = $row->result_source->relationship_info($relation);
-    if ( $rel_info->{attrs}->{accessor} eq 'multi' ) {
+    if ($rel_info->{attrs}->{accessor} eq 'multi') {
         my @rs = $row->$relation->all();
         foreach my $rel_row (@rs) {
-            push @results, $self->_relation_with_attributes($rel_row, { %$options, relation => $relation, is_multi => 1, });
+            push @results,
+                $self->_relation_with_attributes($rel_row, { %$options, relation => $relation, is_multi => 1, });
         }
-        return {
-            data => \@results,
-        }
-    }
-    else {
-        return {
-            data => $self->_relation_with_attributes($row->$relation, { %$options, relation => $relation, })
-        }
+        return { data => \@results, };
+    } else {
+        return { data => $self->_relation_with_attributes($row->$relation, { %$options, relation => $relation, }) };
     }
 }
 
@@ -220,8 +214,8 @@ sub _relation_with_attributes {
     my $type            = $options->{relation};
     my $fields          = $options->{related_fields}->{$type} // [];
 
-    if ( !$options->{is_multi} ) {
-        $type = Lingua::EN::Inflexion::noun( lc( $type ) )->plural;
+    if (!$options->{is_multi}) {
+        $type = Lingua::EN::Inflexion::noun(lc($type))->plural;
     }
 
     my %attributes = $row->$attrs_method();
@@ -230,13 +224,13 @@ sub _relation_with_attributes {
         $type =~ s/_/-/g;
     }
 
-    if ( scalar(@$fields) ) {
-        %attributes = %{$self->_sparse_attributes({%attributes}, $fields)};
+    if (scalar(@$fields)) {
+        %attributes = %{ $self->_sparse_attributes({%attributes}, $fields) };
     }
 
     return {
-        id   => delete $attributes{id} // $row->id,
-        type => $type,
+        id         => delete $attributes{id} // $row->id,
+        type       => $type,
         attributes => \%attributes,
     };
 }
@@ -245,7 +239,7 @@ sub _sparse_attributes {
     my ($self, $attributes, $fields) = @_;
     my @delete;
     for my $field (keys(%$attributes)) {
-        unless ( List::Util::first { $_ eq $field } @$fields ) {
+        unless (List::Util::first { $_ eq $field } @$fields) {
             push @delete, $field;
         }
     }
@@ -256,7 +250,7 @@ sub _sparse_attributes {
 sub _kebab_case {
     my (%row) = @_;
     my %new_row;
-    foreach my $column ( keys(%row) ) {
+    foreach my $column (keys(%row)) {
         my $value = $row{$column};
         $column =~ s/_/-/g;
         $new_row{$column} = $value;

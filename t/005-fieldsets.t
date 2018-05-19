@@ -5,15 +5,15 @@ use lib 't/lib';
 use Test::Most;
 use Test::JSONAPI;
 
-my $t = Test::JSONAPI->new( { api_url => 'http://example.com/api' } );
+my $t = Test::JSONAPI->new({ api_url => 'http://example.com/api' });
 
 my $post = $t->schema->resultset('Post')->find(1);
 
 is_deeply(
     $t->resource_document($post, { fields => [qw/title/] }),
     {
-        id => 1,
-        type => 'posts',
+        id         => 1,
+        type       => 'posts',
         attributes => {
             title => 'Intro to JSON API',
         }
@@ -22,36 +22,34 @@ is_deeply(
 );
 
 is_deeply(
-    $t->resource_document($post,
+    $t->resource_document(
+        $post,
         {
-            fields => [qw/title/],
+            fields             => [qw/title/],
             with_relationships => 1,
-            with_attributes => 1,
-            includes => [qw/comments/],
-            related_fields => {
-                comments => [qw/likes/]
-            }
-        }
+            with_attributes    => 1,
+            includes           => [qw/comments/],
+            related_fields     => {
+                comments => [qw/likes/] } }
     ),
     {
-        id => 1,
-        type => 'posts',
+        id         => 1,
+        type       => 'posts',
         attributes => {
             title => 'Intro to JSON API',
         },
         relationships => {
             comments => {
-                data => [
-                    {
-                        id => 1,
-                        type => 'comments',
+                data => [{
+                        id         => 1,
+                        type       => 'comments',
                         attributes => {
                             likes => 2,
                         },
                     },
                     {
-                        id => 2,
-                        type => 'comments',
+                        id         => 2,
+                        type       => 'comments',
                         attributes => {
                             likes => 4,
                         },
@@ -71,21 +69,20 @@ is_deeply(
         },
     ),
     {
-        data => [
-			{
-				id => 1,
-				type => 'comments',
-				attributes => {
-					likes => 2,
-				},
-			},
-			{
-				id => 2,
-				type => 'comments',
-				attributes => {
-					likes => 4,
-				},
-			},
+        data => [{
+                id         => 1,
+                type       => 'comments',
+                attributes => {
+                    likes => 2,
+                },
+            },
+            {
+                id         => 2,
+                type       => 'comments',
+                attributes => {
+                    likes => 4,
+                },
+            },
         ]
     },
     'resource documents can read the sparse fieldset option'
