@@ -30,6 +30,12 @@ version 1.3
     # Multiple resource documents
     my $docs = $jsonapi->resource_documents($schema->resultset('User'));
 
+    # With sparse fieldsets
+    my $doc = $jsonapi->resource_document($user, { fields => [qw/name email/] });
+
+    # Relationships with sparse fieldsets
+    my $doc = $jsonapi->resource_document($user, { related_fields => { author => [qw/name expertise/] } });
+
 # DESCRIPTION
 
 Moo class that builds data structures according to the [JSON API](http://jsonapi.org/format/) specification.
