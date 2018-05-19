@@ -8,6 +8,7 @@ use Carp                  ();
 use CHI;
 use Lingua::EN::Inflexion ();
 use Lingua::EN::Segment;
+use List::Util;
 
 has kebab_case_attrs => (
     is      => 'ro',
@@ -95,11 +96,14 @@ sub resource_document {
     my $with_attributes    = $options->{with_attributes};
     my $with_relationships = $options->{with_relationships};
     my $includes           = $options->{includes};
+    my $fields             = [ grep { $_ } @{$options->{fields} // []} ];
+
+    $options->{related_fields} //= {};
 
     my $type = lc( $row->result_source->source_name() );
     my $noun = Lingua::EN::Inflexion::noun($type);
 
-    my %columns = $row->$attrs_method();
+    my %columns = $row->$attrs_method($fields);
     my $id      = delete $columns{id} // $row->id;
 
     unless ( $type && $id ) {
@@ -134,6 +138,10 @@ sub resource_document {
         }
         return join('-', @words);
     });
+
+    if ( scalar(@$fields) ) {
+        %columns = %{$self->_sparse_attributes({%columns}, $fields)};
+    }
 
     my %document;
 
@@ -210,6 +218,7 @@ sub _relation_with_attributes {
     my $with_kebab_case = $options->{kebab_case_attrs} // $self->kebab_case_attrs;
     my $attrs_method    = $options->{attributes_via} // $self->attributes_via;
     my $type            = $options->{relation};
+    my $fields          = $options->{related_fields}->{$type} // [];
 
     if ( !$options->{is_multi} ) {
         $type = Lingua::EN::Inflexion::noun( lc( $type ) )->plural;
@@ -221,11 +230,27 @@ sub _relation_with_attributes {
         $type =~ s/_/-/g;
     }
 
+    if ( scalar(@$fields) ) {
+        %attributes = %{$self->_sparse_attributes({%attributes}, $fields)};
+    }
+
     return {
         id   => delete $attributes{id} // $row->id,
         type => $type,
         attributes => \%attributes,
     };
+}
+
+sub _sparse_attributes {
+    my ($self, $attributes, $fields) = @_;
+    my @delete;
+    for my $field (keys(%$attributes)) {
+        unless ( List::Util::first { $_ eq $field } @$fields ) {
+            push @delete, $field;
+        }
+    }
+    delete $attributes->{$_} for @delete;
+    return $attributes;
 }
 
 sub _kebab_case {
@@ -389,6 +414,22 @@ If this option is true, links object will be replaced with attributes.
 
 If C<with_relationships> is true, this optional array ref can be
 provided to include a subset of relations instead of all of them.
+
+=item C<fields> I<ArrayRef>
+
+An optional list of attributes to include for the given resource. Implements
+L<sparse fieldsets|http://jsonapi.org/format/#fetching-sparse-fieldsets> in the specification.
+
+Will pass the array reference to the C<attributes_via> method, which should make use
+of the reference and return B<only> those attributes that were requested.
+
+=item C<related_fields> I<HashRef>
+
+Behaves the same as the C<fields> option for relationships, returning only those fields
+for the related resource that were requested.
+
+Not specifying sparse fieldsets for a resource implies requesting all attributes for
+that relationship.
 
 =back
 
