@@ -425,7 +425,7 @@ of the reference and return B<only> those attributes that were requested.
 
 =item C<related_fields> I<HashRef>
 
-Behaves the same as the C<fields> option for relationships, returning only those fields
+Behaves the same as the C<fields> option but for relationships, returning only those fields
 for the related resource that were requested.
 
 Not specifying sparse fieldsets for a resource implies requesting all attributes for

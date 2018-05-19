@@ -157,7 +157,7 @@ The following options can be given:
 
 - `related_fields` _HashRef_
 
-    Behaves the same as the `fields` option for relationships, returning only those fields
+    Behaves the same as the `fields` option but for relationships, returning only those fields
     for the related resource that were requested.
 
     Not specifying sparse fieldsets for a resource implies requesting all attributes for
