@@ -14,9 +14,8 @@ provide an ArrayRef to this argument.
 =cut
 
 has includes => (
-	is => 'ro',
-	default => sub { undef }
-);
+    is      => 'ro',
+    default => sub { undef });
 
 =head2 fields
 
@@ -25,9 +24,8 @@ Subset of fields to include in the document.
 =cut
 
 has fields => (
-	is => 'ro',
-	default => sub { [] }
-);
+    is      => 'ro',
+    default => sub { [] });
 
 =head2 api_url
 
@@ -36,9 +34,7 @@ attribute when you want to build links.
 
 =cut
 
-has api_url => (
-	is => 'ro',
-);
+has api_url => (is => 'ro',);
 
 =head2 with_attributes
 
@@ -66,8 +62,7 @@ with dashes for the rows column attributes.
 =cut
 
 has kebab_case_attrs => (
-	is => 'ro',
-	default => sub { 0 }
-);
+    is      => 'ro',
+    default => sub { 0 });
 
 1;

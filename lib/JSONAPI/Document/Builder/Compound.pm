@@ -7,43 +7,39 @@ use Carp ();
 use JSONAPI::Document::Builder::Relationships;
 
 has relationships => (
-	is => 'ro',
-	default => sub { [] },
+    is      => 'ro',
+    default => sub { [] },
 );
 
 sub build_document {
-	my ($self) = @_;
+    my ($self) = @_;
 
-	my $document = $self->build();
+    my $document = $self->build();
 
-	my %relationships;
-	foreach my $relationship ( @{$self->relationships} ) {
-		$relationships{$relationship} = $self->build_relationship(
-			$relationship,
-			undef,
-			{ api_url => $self->api_url }
-		);
-	}
-	if ( values(%relationships) ) {
-		$document->{relationships} = \%relationships;
-	}
+    my %relationships;
+    foreach my $relationship (@{ $self->relationships }) {
+        $relationships{$relationship} = $self->build_relationship($relationship, undef, { api_url => $self->api_url });
+    }
+    if (values(%relationships)) {
+        $document->{relationships} = \%relationships;
+    }
 
-	return $document;
+    return $document;
 }
 
 sub build_relationships {
-	my ($self, $relationships, $fields) = @_;
-	$fields //= {};
-	return [] unless $relationships;
+    my ($self, $relationships, $fields) = @_;
+    $fields //= {};
+    return [] unless $relationships;
 
-	if ( ref($relationships) ne 'ARRAY' ) {
-		Carp::confess('Invalid request: relationships must be an array ref.');
-	}
+    if (ref($relationships) ne 'ARRAY') {
+        Carp::confess('Invalid request: relationships must be an array ref.');
+    }
 
-	return [] unless @$relationships;
+    return [] unless @$relationships;
 
-	my @included;
-	foreach my $relation (sort @$relationships) {
+    my @included;
+    foreach my $relation (sort @$relationships) {
         my $result = $self->build_relationship($relation, $fields->{$relation}, { with_attributes => 1 });
         if (my $related_docs = $result->{data}) {
             if (ref($related_docs) eq 'ARRAY') {    # plural relations
@@ -54,7 +50,7 @@ sub build_relationships {
         }
     }
 
-	return \@included;
+    return \@included;
 }
 
 1;

@@ -44,24 +44,24 @@ sub _build_segmenter {
 
 sub compound_resource_document {
     my ($self, $row, $options) = @_;
-	$options //= {};
-    my $fields             = [ grep { $_ } @{ $options->{fields} // [] } ];
-	my $related_fields = $options->{related_fields} //= {};
+    $options //= {};
+    my $fields = [grep { $_ } @{ $options->{fields} // [] }];
+    my $related_fields = $options->{related_fields} //= {};
 
     my @relationships = $row->result_source->relationships();
     if ($options->{includes}) {
         @relationships = @{ $options->{includes} };
     }
 
-	my $builder = JSONAPI::Document::Builder::Compound->new(
-		api_url => $self->api_url,
-		chi => $self->chi,
-		fields => $fields,
-		kebab_case_attrs => $self->kebab_case_attrs,
-		row	=> $row,
-		segmenter => $self->segmenter,
-		relationships => \@relationships,
-	);
+    my $builder = JSONAPI::Document::Builder::Compound->new(
+        api_url          => $self->api_url,
+        chi              => $self->chi,
+        fields           => $fields,
+        kebab_case_attrs => $self->kebab_case_attrs,
+        row              => $row,
+        segmenter        => $self->segmenter,
+        relationships    => \@relationships,
+    );
 
     return {
         data     => $builder->build_document(),
@@ -82,39 +82,38 @@ sub resource_document {
     Carp::confess('No row provided') unless $row;
 
     $options //= {};
-	my $with_attributes	   = $options->{with_attributes};
-    my $includes           = $options->{includes};
-    my $fields             = [grep { $_ } @{ $options->{fields} // [] }];
+    my $with_attributes = $options->{with_attributes};
+    my $includes        = $options->{includes};
+    my $fields          = [grep { $_ } @{ $options->{fields} // [] }];
 
     $options->{related_fields} //= {};
 
-	my $builder = JSONAPI::Document::Builder->new(
-		api_url => $self->api_url,
-		chi => $self->chi,
-		fields => $fields,
-		kebab_case_attrs => $self->kebab_case_attrs,
-		row	=> $row,
-		segmenter => $self->segmenter,
-	);
+    my $builder = JSONAPI::Document::Builder->new(
+        api_url          => $self->api_url,
+        chi              => $self->chi,
+        fields           => $fields,
+        kebab_case_attrs => $self->kebab_case_attrs,
+        row              => $row,
+        segmenter        => $self->segmenter,
+    );
 
-	my $document = $builder->build();
+    my $document = $builder->build();
 
-	if ( $includes ) { # maybe the builders don't need to know about includes?
-		my %relationships;
-		foreach my $relationship ( @$includes ) {
-			my $relationship_type = $builder->format_type($relationship);
-			$relationships{$relationship_type} = $builder->build_relationship(
-				$relationship,
-				$options->{related_fields}->{$relationship},
-				{ with_attributes => $with_attributes }
-			);
-		}
-		if ( values(%relationships) ) {
-			$document->{relationships} = \%relationships;
-		}
-	}
+    if ($includes) {    # maybe the builders don't need to know about includes?
+        my %relationships;
+        foreach my $relationship (@$includes) {
+            my $relationship_type = $builder->format_type($relationship);
+            $relationships{$relationship_type} = $builder->build_relationship(
+                $relationship,
+                $options->{related_fields}->{$relationship},
+                { with_attributes => $with_attributes });
+        }
+        if (values(%relationships)) {
+            $document->{relationships} = \%relationships;
+        }
+    }
 
-	return $document;
+    return $document;
 }
 
 1;
