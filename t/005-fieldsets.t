@@ -26,7 +26,6 @@ is_deeply(
         $post,
         {
             fields             => [qw/title/],
-            with_relationships => 1,
             with_attributes    => 1,
             includes           => [qw/comments/],
             related_fields     => {

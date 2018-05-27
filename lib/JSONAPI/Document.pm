@@ -6,6 +6,8 @@ use Moo;
 
 use Carp ();
 use CHI;
+use JSONAPI::Document::Builder;
+use JSONAPI::Document::Builder::Compound;
 use Lingua::EN::Inflexion ();
 use Lingua::EN::Segment;
 use List::Util;
@@ -13,11 +15,6 @@ use List::Util;
 has kebab_case_attrs => (
     is      => 'ro',
     default => sub { 0 });
-
-has attributes_via => (
-    is      => 'ro',
-    default => sub { 'get_inflated_columns' },
-);
 
 has api_url => (
     is  => 'ro',
@@ -47,29 +44,28 @@ sub _build_segmenter {
 
 sub compound_resource_document {
     my ($self, $row, $options) = @_;
+	$options //= {};
+    my $fields             = [ grep { $_ } @{ $options->{fields} // [] } ];
+	my $related_fields = $options->{related_fields} //= {};
 
     my @relationships = $row->result_source->relationships();
     if ($options->{includes}) {
         @relationships = @{ $options->{includes} };
     }
 
-    my $document = $self->resource_document($row, { with_relationships => 1, includes => \@relationships });
-
-    my @included;
-    foreach my $relation (sort @relationships) {
-        my $result = $self->_related_resource_documents($row, $relation, { with_attributes => 1 });
-        if (my $related_docs = $result->{data}) {
-            if (ref($related_docs) eq 'ARRAY') {    # plural relations
-                push @included, @$related_docs;
-            } else {                                # singular relations
-                push @included, $related_docs;
-            }
-        }
-    }
+	my $builder = JSONAPI::Document::Builder::Compound->new(
+		api_url => $self->api_url,
+		chi => $self->chi,
+		fields => $fields,
+		kebab_case_attrs => $self->kebab_case_attrs,
+		row	=> $row,
+		segmenter => $self->segmenter,
+		relationships => \@relationships,
+	);
 
     return {
-        data     => $document,
-        included => \@included,
+        data     => $builder->build_document(),
+        included => $builder->build_relationships(\@relationships, $related_fields),
     };
 }
 
@@ -86,176 +82,39 @@ sub resource_document {
     Carp::confess('No row provided') unless $row;
 
     $options //= {};
-    my $attrs_method       = $options->{attributes_via} // $self->attributes_via;
-    my $with_kebab_case    = $options->{kebab_case_attrs} // $self->kebab_case_attrs;
-    my $with_attributes    = $options->{with_attributes};
-    my $with_relationships = $options->{with_relationships};
+	my $with_attributes	   = $options->{with_attributes};
     my $includes           = $options->{includes};
     my $fields             = [grep { $_ } @{ $options->{fields} // [] }];
 
     $options->{related_fields} //= {};
 
-    my $type = lc($row->result_source->source_name());
-    my $noun = Lingua::EN::Inflexion::noun($type);
+	my $builder = JSONAPI::Document::Builder->new(
+		api_url => $self->api_url,
+		chi => $self->chi,
+		fields => $fields,
+		kebab_case_attrs => $self->kebab_case_attrs,
+		row	=> $row,
+		segmenter => $self->segmenter,
+	);
 
-    my %columns = $row->$attrs_method($fields);
-    my $id      = delete $columns{id} // $row->id;
+	my $document = $builder->build();
 
-    unless ($type && $id) {
-        return undef;    # Document is not valid without a type and id.
-    }
+	if ( $includes ) { # maybe the builders don't need to know about includes?
+		my %relationships;
+		foreach my $relationship ( @$includes ) {
+			my $relationship_type = $builder->format_type($relationship);
+			$relationships{$relationship_type} = $builder->build_relationship(
+				$relationship,
+				$options->{related_fields}->{$relationship},
+				{ with_attributes => $with_attributes }
+			);
+		}
+		if ( values(%relationships) ) {
+			$document->{relationships} = \%relationships;
+		}
+	}
 
-    my %relationships;
-    if ($with_relationships) {
-        my @relations = $includes ? @$includes : $row->result_source->relationships();
-        foreach my $rel (@relations) {
-            if ($row->has_relationship($rel)) {
-                if ($with_attributes) {
-                    $relationships{$rel} = $self->_related_resource_documents($row, $rel, $options);
-                } else {
-                    $relationships{$rel} = $self->_related_resource_links($row, $noun, $rel, $options);
-                }
-            }
-        }
-    }
-
-    if ($with_kebab_case) {
-        %columns = _kebab_case(%columns);
-        if (values(%relationships)) {
-            %relationships = _kebab_case(%relationships);
-        }
-    }
-
-    my $resource_type = $self->chi->compute(
-        __PACKAGE__ . ':' . $noun->plural,
-        undef,
-        sub {
-            my @words = $self->segmenter->segment($noun->plural);
-            unless (@words > 0) {
-                @words = ($noun->plural);
-            }
-            return join('-', @words);
-        });
-
-    if (scalar(@$fields)) {
-        %columns = %{ $self->_sparse_attributes({%columns}, $fields) };
-    }
-
-    my %document;
-
-    $document{id}         = $id;
-    $document{type}       = $resource_type;
-    $document{attributes} = \%columns;
-
-    if (values(%relationships)) {
-        $document{relationships} = \%relationships;
-    }
-
-    return \%document;
-}
-
-sub _related_resource_links {
-    my ($self, $row, $row_noun, $relation, $options) = @_;
-    my $with_kebab_case = $options->{kebab_case_attrs} // $self->kebab_case_attrs;
-    my $relation_row    = $row->$relation;
-    my $relation_type   = $relation;
-
-    if ($with_kebab_case) {
-        $relation_type =~ s/_/-/g;
-    }
-
-    my $data;
-    my $rel_info = $row->result_source->relationship_info($relation);
-    if ($rel_info->{attrs}->{accessor} eq 'multi') {
-        $data = [];
-        my @rs = $relation_row->all();
-        foreach my $rel_row (@rs) {
-            push @$data, { id => $rel_row->id, type => $relation_type };
-        }
-    } else {
-        $data = {
-            id   => $relation_row->id,
-            type => Lingua::EN::Inflexion::noun(lc($relation))->plural,
-        };
-    }
-
-    return {
-        links => {
-            self    => $self->api_url . '/' . $row_noun->plural . '/' . $row->id . "/relationships/$relation_type",
-            related => $self->api_url . '/' . $row_noun->plural . '/' . $row->id . "/$relation_type",
-        },
-        data => $data,
-    };
-}
-
-sub _related_resource_documents {
-    my ($self, $row, $relation, $options) = @_;
-    $options //= {};
-
-    my @results;
-
-    my $rel_info = $row->result_source->relationship_info($relation);
-    if ($rel_info->{attrs}->{accessor} eq 'multi') {
-        my @rs = $row->$relation->all();
-        foreach my $rel_row (@rs) {
-            push @results,
-                $self->_relation_with_attributes($rel_row, { %$options, relation => $relation, is_multi => 1, });
-        }
-        return { data => \@results, };
-    } else {
-        return { data => $self->_relation_with_attributes($row->$relation, { %$options, relation => $relation, }) };
-    }
-}
-
-sub _relation_with_attributes {
-    my ($self, $row, $options) = @_;
-    my $with_kebab_case = $options->{kebab_case_attrs} // $self->kebab_case_attrs;
-    my $attrs_method    = $options->{attributes_via} // $self->attributes_via;
-    my $type            = $options->{relation};
-    my $fields          = $options->{related_fields}->{$type} // [];
-
-    if (!$options->{is_multi}) {
-        $type = Lingua::EN::Inflexion::noun(lc($type))->plural;
-    }
-
-    my %attributes = $row->$attrs_method();
-    if ($with_kebab_case) {
-        %attributes = _kebab_case(%attributes);
-        $type =~ s/_/-/g;
-    }
-
-    if (scalar(@$fields)) {
-        %attributes = %{ $self->_sparse_attributes({%attributes}, $fields) };
-    }
-
-    return {
-        id         => delete $attributes{id} // $row->id,
-        type       => $type,
-        attributes => \%attributes,
-    };
-}
-
-sub _sparse_attributes {
-    my ($self, $attributes, $fields) = @_;
-    my @delete;
-    for my $field (keys(%$attributes)) {
-        unless (List::Util::first { $_ eq $field } @$fields) {
-            push @delete, $field;
-        }
-    }
-    delete $attributes->{$_} for @delete;
-    return $attributes;
-}
-
-sub _kebab_case {
-    my (%row) = @_;
-    my %new_row;
-    foreach my $column (keys(%row)) {
-        my $value = $row{$column};
-        $column =~ s/_/-/g;
-        $new_row{$column} = $value;
-    }
-    return %new_row;
+	return $document;
 }
 
 1;

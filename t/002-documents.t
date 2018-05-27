@@ -14,7 +14,21 @@ ok($t->can('compound_resource_document'), 'provides compound_resource_document m
 my $post = $t->schema->resultset('Post')->find(1);
 
 is_deeply(
-    $t->resource_document($post, { with_relationships => 1 }),
+    $t->resource_document($post),
+    {
+        id         => 1,
+        type       => 'posts',
+        attributes => {
+            author_id   => 1,
+            description => 'This is a Perl transformer for the JSON API specification',
+            title       => 'Intro to JSON API',
+        },
+    },
+    'created document'
+);
+
+is_deeply(
+    $t->resource_document($post, { includes => [qw/author comments/] }),
     {
         id         => 1,
         type       => 'posts',
@@ -38,7 +52,7 @@ is_deeply(
                 },
                 data => [{ type => 'comments', id => 1, }, { type => 'comments', id => 2, },] } }
     },
-    'created document with relationships'
+    'created document with relationship links'
 );
 
 is_deeply(
@@ -175,4 +189,5 @@ is_deeply(
     },
     'resource with dashes'
 );
+
 done_testing;
