@@ -4,7 +4,7 @@ JSONAPI::Document - Turn DBIx results into JSON API documents.
 
 # VERSION
 
-version 1.3
+version 1.4
 
 # SYNOPSIS
 
@@ -19,10 +19,10 @@ version 1.3
     my $doc = $jsonapi->resource_document($user);
 
     # Same but with all relationships
-    my $doc = $jsonapi->resource_document($user, { with_relationships => 1 });
+    my $doc = $jsonapi->resource_document($user, { includes => 'all_related' });
 
     # With only the author relationship
-    my $doc = $jsonapi->resource_document($user, { with_relationships => 1, relationships => ['author'] });
+    my $doc = $jsonapi->resource_document($user, { includes => ['author'] });
 
     # Fully blown resource document with all relationships and their attributes
     my $doc = $jsonapi->compound_resource_document($user);

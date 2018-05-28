@@ -83,10 +83,13 @@ sub resource_document {
 
     $options //= {};
     my $with_attributes = $options->{with_attributes};
-    my $includes        = $options->{includes};
+    my $includes        = $options->{includes} // [];
     my $fields          = [grep { $_ } @{ $options->{fields} // [] }];
+    my $related_fields  = $options->{related_fields} //= {};
 
-    $options->{related_fields} //= {};
+    if (ref(\$includes) eq 'SCALAR' && $includes eq 'all_related') {
+        $includes = [$row->result_source->relationships()];
+    }
 
     my $builder = JSONAPI::Document::Builder->new(
         api_url          => $self->api_url,
@@ -99,13 +102,13 @@ sub resource_document {
 
     my $document = $builder->build();
 
-    if ($includes) {    # maybe the builders don't need to know about includes?
+    if (@$includes) {
         my %relationships;
         foreach my $relationship (@$includes) {
             my $relationship_type = $builder->format_type($relationship);
             $relationships{$relationship_type} = $builder->build_relationship(
                 $relationship,
-                $options->{related_fields}->{$relationship},
+                $related_fields->{$relationship},
                 { with_attributes => $with_attributes });
         }
         if (values(%relationships)) {
@@ -139,10 +142,10 @@ JSONAPI::Document - Turn DBIx results into JSON API documents.
     my $doc = $jsonapi->resource_document($user);
 
     # Same but with all relationships
-    my $doc = $jsonapi->resource_document($user, { with_relationships => 1 });
+    my $doc = $jsonapi->resource_document($user, { includes => 'all_related' });
 
     # With only the author relationship
-    my $doc = $jsonapi->resource_document($user, { with_relationships => 1, relationships => ['author'] });
+    my $doc = $jsonapi->resource_document($user, { includes => ['author'] });
 
     # Fully blown resource document with all relationships and their attributes
     my $doc = $jsonapi->compound_resource_document($user);

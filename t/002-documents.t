@@ -190,4 +190,27 @@ is_deeply(
     'resource with dashes'
 );
 
+is_deeply(
+    $t->resource_document($t->schema->resultset('EmailTemplate')->find(1), { includes => 'all_related' }),
+    {
+        id         => 1,
+        type       => 'email-templates',
+        attributes => {
+            author_id => 1,
+            name      => 'Test Template',
+            body      => 'Test template body',
+        },
+        relationships => {
+            author => {
+                links => {
+                    self    => 'http://example.com/api/email-templates/1/relationships/author',
+                    related => 'http://example.com/api/email-templates/1/author'
+                },
+                data => { type => 'authors', id => 1, }
+
+            } }
+    },
+    'resource with all related relationships'
+);
+
 done_testing;

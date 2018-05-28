@@ -5,17 +5,43 @@ with 'JSONAPI::Document::Builder::Role::Parameters',
     'JSONAPI::Document::Builder::Role::Attributes',
     'JSONAPI::Document::Builder::Role::Type';
 
-use Carp;
+use Carp ();
+
+=head2 row
+
+The C<DBIx::Class::Row> for C<relationship>.
+
+Note this is not the relationship row, rather
+it is its parent.
+
+=cut
 
 has row => (
     is       => 'ro',
     required => 1,
 );
 
+=head2 relationship
+
+String name of the relationship.
+
+=cut
+
 has relationship => (
     is       => 'ro',
     required => 1,
 );
+
+=head2 with_attributes
+
+Boolean; Default: false
+
+If specified, will build the relationship with attributes
+instead of links.
+
+Default behaviour is to build with links.
+
+=cut
 
 has with_attributes => (
     is      => 'ro',
@@ -108,6 +134,12 @@ sub build_document {
         }
     }
 }
+
+=head2 build_single_document(DBIx::Class::Row $related_row, Str $relationship) : HashRef
+
+Builds a HashRef representing a single relationship row.
+
+=cut
 
 sub build_single_document {
     my ($self, $related_row, $relationship) = @_;
