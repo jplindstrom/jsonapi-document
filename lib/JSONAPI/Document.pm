@@ -8,9 +8,7 @@ use Carp ();
 use CHI;
 use JSONAPI::Document::Builder;
 use JSONAPI::Document::Builder::Compound;
-use Lingua::EN::Inflexion ();
 use Lingua::EN::Segment;
-use List::Util;
 
 has kebab_case_attrs => (
     is      => 'ro',

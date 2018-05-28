@@ -1,5 +1,16 @@
 package JSONAPI::Document::Builder::Role::Parameters;
 
+=head1 NAME
+
+JSONAPI::Document::Builder::Role::Parameters - All available parameters for builders
+
+=head1 DESCRIPTION
+
+This role contains (hopefully) all the understandable parameters that can
+be understood by any given builder.
+
+=cut
+
 use Moo::Role;
 
 =head2 fields

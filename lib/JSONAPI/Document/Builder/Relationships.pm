@@ -1,5 +1,15 @@
 package JSONAPI::Document::Builder::Relationships;
 
+=head1 NAME
+
+JSONAPI::Document::Builder::Relationships - Related Resource Document builder
+
+=head1 DESCRIPTION
+
+Builds the related resource document for a given row.
+
+=cut
+
 use Moo;
 with 'JSONAPI::Document::Builder::Role::Parameters',
     'JSONAPI::Document::Builder::Role::Attributes',
@@ -47,6 +57,12 @@ has with_attributes => (
     is      => 'ro',
     default => sub { 0 },
 );
+
+=head2 build : HashRef
+
+Main caller method; Builds the related resource document.
+
+=cut
 
 sub build {
     my ($self) = @_;

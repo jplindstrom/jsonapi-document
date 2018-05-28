@@ -1,8 +1,28 @@
 package JSONAPI::Document::Builder::Role::Attributes;
 
+=head1 NAME
+
+JSONAPI::Document::Builder::Role::Attributes - Utility role for JSON API attributes
+
+=head1 DESCRIPTION
+
+Provides methods to retrieve and manipulate a resource documents attributes.
+
+=cut
+
 use Moo::Role;
 
 use List::Util;
+
+=head2 get_attributes(DBIx::Class::Row $row?) : HashRef
+
+Retrieves the attributes for a given row.
+
+Does all of the field manipulation according to the
+relevant attributes of the consuming class, such as
+returning a subset of fields, casing, etc.
+
+=cut
 
 sub get_attributes {
     my ($self, $row) = @_;
@@ -36,6 +56,13 @@ sub get_attributes {
     }
     return \%columns;
 }
+
+=head2 kebab_case(Hash $row) : Hash
+
+Takes the keys of the given row and dash cases
+them.
+
+=cut
 
 sub kebab_case {
     my ($self, %row) = @_;
