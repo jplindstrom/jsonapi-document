@@ -47,6 +47,12 @@ library does using the [source\_name](https://metacpan.org/pod/DBIx::Class::Resu
 of the result row. The type is also pluralised using [Linua::EN::Inflexion](https://metacpan.org/pod/Lingua::EN::Inflexion)
 while keeping relationship names intact (i.e. an 'author' relationship will still be called 'author', with the type 'authors').
 
+This module supplies an opt-in Moo role that can be consumed by objects that layer over a DBIx::Class::Row,
+`JSONAPI::Document::Role::Attributes`. Consuming objects should implement a method called `attributes`
+which will be used throughout the creation of resource documents for that result type to build the attributes
+of the document. This is useful when you have a more complicated set of attribute that cannot be fulfilled
+by simply calling `get_inflated_columns` (the default behaviour).
+
 # ATTRIBUTES
 
 ## data\_dir
@@ -62,14 +68,6 @@ Required; An absolute URL pointing to your servers JSON API namespace.
 
 Boolean attribute; setting this will make the column keys for each document into
 kebab-cased-strings instead of snake\_cased. Default is false.
-
-## attributes\_via
-
-The method name to use throughout the creation of the resource document(s) to
-get the attributes of the resources/relationships. This is useful if you
-have a object that layers your DBIx results, you can instruct this
-module to call that method instead of the default, which is
-[get\_inflated\_columns](https://metacpan.org/pod/DBIx::Class::Row#get_inflated_columns).
 
 # METHODS
 
