@@ -102,9 +102,23 @@ The following options can be given:
 - `includes`
 
     An array reference specifying inclusion of a subset of relationships.
-    By default all the relationships will be included, use this if you
+    By default all the relationships will be included. Use this if you
     only want a subset of relationships (e.g. when accepting the `includes`
-    query parameter in your application routes).
+    query parameter in your API requests, where you have to return only what
+    relationships were requested).
+
+    This argument should contain strings representing direct relationships to the row,
+    and can also contain hash refs which specify nested inclusion. Example:
+
+        $self->compound_resource_document($post, ['author', { comments => ['author'] }]);
+
+    This will include the post as the primary document, its direct relationships 'author'
+    and 'comments', and the 'author' of each related comment.
+
+    **NOTE**: Nested relationships are experimental and come with the following limitations:
+
+    \- many\_to\_many relationships are not supported
+    \- only one level of depth is supported (so requesting 'include=comments.likes.author' will throw errors)
 
 ## resource\_document(_DBIx::Class::Row|Object_ $row, _HashRef_ $options)
 
@@ -129,23 +143,21 @@ to minimize the need to re-compute the document type.
 
 The following options can be given:
 
-- `with_relationships` _Bool_
+- `includes` _Str|ArrayRef_
 
-    If true, will introspect the rows relationships and include each
-    of them in the relationships key of the document.
+    Optional; Used to specify any relationships of the row to include.
+
+    This argument can contain either the value 'all\_related', which will return all the direct
+    relationships of the row, or an array ref including a subset of direct relationships.
 
 - `with_attributes` _Bool_
 
-    If `with_relationships` is true, for each resulting row of a relationship,
-    the attributes of that relation will be included.
+    If `includes` is used, for each resulting relationship row, the attributes (columns) of that
+    relationship will be included.
 
     By default, each relationship will contain a [links object](http://jsonapi.org/format/#document-links).
+
     If this option is true, links object will be replaced with attributes.
-
-- `includes` _ArrayRef_
-
-    If `with_relationships` is true, this optional array ref can be
-    provided to include a subset of relations instead of all of them.
 
 - `fields` _ArrayRef_
 

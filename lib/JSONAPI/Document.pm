@@ -225,9 +225,23 @@ The following options can be given:
 =item C<includes>
 
 An array reference specifying inclusion of a subset of relationships.
-By default all the relationships will be included, use this if you
+By default all the relationships will be included. Use this if you
 only want a subset of relationships (e.g. when accepting the C<includes>
-query parameter in your application routes).
+query parameter in your API requests, where you have to return only what
+relationships were requested).
+
+This argument should contain strings representing direct relationships to the row,
+and can also contain hash refs which specify nested inclusion. Example:
+
+    $self->compound_resource_document($post, ['author', { comments => ['author'] }]);
+
+This will include the post as the primary document, its direct relationships 'author'
+and 'comments', and the 'author' of each related comment.
+
+B<NOTE>: Nested relationships are experimental and come with the following limitations:
+
+- many_to_many relationships are not supported
+- only one level of depth is supported (so requesting 'include=comments.likes.author' will throw errors)
 
 =back
 
@@ -256,23 +270,21 @@ The following options can be given:
 
 =over
 
-=item C<with_relationships> I<Bool>
+=item C<includes> I<Str|ArrayRef>
 
-If true, will introspect the rows relationships and include each
-of them in the relationships key of the document.
+Optional; Used to specify any relationships of the row to include.
+
+This argument can contain either the value 'all_related', which will return all the direct
+relationships of the row, or an array ref including a subset of direct relationships.
 
 =item C<with_attributes> I<Bool>
 
-If C<with_relationships> is true, for each resulting row of a relationship,
-the attributes of that relation will be included.
+If C<includes> is used, for each resulting relationship row, the attributes (columns) of that
+relationship will be included.
 
 By default, each relationship will contain a L<links object|http://jsonapi.org/format/#document-links>.
+
 If this option is true, links object will be replaced with attributes.
-
-=item C<includes> I<ArrayRef>
-
-If C<with_relationships> is true, this optional array ref can be
-provided to include a subset of relations instead of all of them.
 
 =item C<fields> I<ArrayRef>
 
