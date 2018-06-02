@@ -238,8 +238,17 @@ and 'comments', and the 'author' of each related comment.
 
 B<NOTE>: Nested relationships are experimental and come with the following limitations:
 
-- many_to_many relationships are not supported
-- only one level of depth is supported (so requesting 'include=comments.likes.author' will throw errors)
+=over 2
+
+=item
+
+many_to_many relationships are not supported
+
+=item
+
+only one level of depth is supported (so requesting 'include=comments.likes.author' will throw errors)
+
+=back
 
 =back
 

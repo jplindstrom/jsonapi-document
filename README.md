@@ -115,8 +115,8 @@ The following options can be given:
 
     **NOTE**: Nested relationships are experimental and come with the following limitations:
 
-    \- many\_to\_many relationships are not supported
-    \- only one level of depth is supported (so requesting 'include=comments.likes.author' will throw errors)
+    - many\_to\_many relationships are not supported
+    - only one level of depth is supported (so requesting 'include=comments.likes.author' will throw errors)
 
 ## resource\_document(_DBIx::Class::Row|Object_ $row, _HashRef_ $options)
 
