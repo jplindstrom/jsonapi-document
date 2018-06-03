@@ -17,7 +17,7 @@ has kebab_case_attrs => (
 has api_url => (
     is  => 'ro',
     isa => sub {
-        Carp::croak('api_url should be an absolute url') unless $_[0] =~ m/^http/;
+        Carp::croak('api_url should be an absolute url') unless $_[0] =~ m/^http/i;
     },
     required => 1,
 );
