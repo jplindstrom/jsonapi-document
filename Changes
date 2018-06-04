@@ -1,5 +1,8 @@
 {{$NEXT}}
 
+1.5       2018-06-04 22:36:07+01:00 Europe/London
+- api_url case insensitive type check
+
 1.4       2018-06-03 14:55:21+01:00 Europe/London
 - REFACTOR
 Undergone an internal refactoring that cleans up how the document is built.
