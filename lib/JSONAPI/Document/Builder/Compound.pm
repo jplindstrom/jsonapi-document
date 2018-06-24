@@ -120,7 +120,7 @@ sub build_relationships {
 
         if (ref($result_ref) eq 'ARRAY') {  # The source relation is a has_many, link the nested resources for each one.
             my $source_row = $self->row->$relation_source;
-            if (ref($source_row) eq 'DBIx::Class::ResultSet') {
+            if ($source_row->can('all')) {    # Check if any overlaying dbix resultset class can do "all"
                 my $includes =
                     $self->build_nested_from_resultset($source_row, $result_ref, $nested->{$relation_source}, $fields);
                 push @included, $_ for @$includes;
