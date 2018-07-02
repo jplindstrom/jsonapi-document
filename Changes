@@ -1,5 +1,8 @@
 {{$NEXT}}
 
+1.9       2018-07-02 21:32:35+01:00 Europe/London
+- Update readme
+
 1.8       2018-07-02 21:27:14+01:00 Europe/London
 - Fixed bug where requesting relationships for compound documents whose relationship
 names contained underscores were not producing the right document type.
