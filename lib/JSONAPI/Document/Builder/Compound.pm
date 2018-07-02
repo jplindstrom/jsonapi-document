@@ -72,7 +72,8 @@ sub build_document {
     foreach my $relationship (@{ $self->primary_relationships },
         map { $_ } map { keys(%$_) } @{ $self->nested_relationships })
     {
-        $relationships{$relationship} = $self->build_relationship($relationship);
+        my $relationship_type = $self->format_type($relationship);
+        $relationships{$relationship_type} = $self->build_relationship($relationship);
     }
     if (values(%relationships)) {
         $document->{relationships} = \%relationships;
