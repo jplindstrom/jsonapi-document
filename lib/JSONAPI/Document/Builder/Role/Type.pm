@@ -35,7 +35,7 @@ sub format_type {
     unless ($type) {
         Carp::confess('Missing argument: type');
     }
-    $type =~ s/_/-/g;
+    $type =~ s/[_-]+/-/g;
     return lc $type;
 }
 
@@ -56,7 +56,7 @@ sub document_type {
             unless (scalar(@words) > 0) {
                 push @words, $noun->plural;
             }
-            @words = map { $_ } grep { $_ =~ m/\A(?:[A-Za-z]+)\z/ } @words;
+            @words = map { $_ } grep { $_ =~ m/\A(?:[A-Za-z_]+)\z/ } @words;
             return $self->format_type(join('-', @words));
         });
     return $result;

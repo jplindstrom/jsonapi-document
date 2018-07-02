@@ -94,7 +94,7 @@ sub build_links_document {
         Carp::confess('Missing required argument: api_url');
     }
 
-    my $relationship_type = $self->format_type($relationship);
+    my $relationship_type = $self->document_type($relationship);
 
     my $data;
     my $rel_info = $row->result_source->relationship_info($relationship);
@@ -102,13 +102,14 @@ sub build_links_document {
         $data = [];
         my @rs = $row->$relationship->all();
         foreach my $related_row (@rs) {
-            push @$data, { id => $related_row->id, type => $self->document_type($relationship_type) };
+            push @$data, { id => $related_row->id, type => $relationship_type };
         }
     } else {
         if (my $related_row = $row->$relationship) {
             $data = {
                 id   => $related_row->id,
-                type => $self->document_type($relationship_type) };
+                type => $relationship_type
+            };
         }
     }
 
@@ -116,8 +117,12 @@ sub build_links_document {
 
     return {
         links => {
-            self    => $self->api_url . '/' . $row_type . '/' . $row->id . "/relationships/$relationship_type",
-            related => $self->api_url . '/' . $row_type . '/' . $row->id . "/$relationship_type",
+            self => $self->api_url . '/'
+                . $row_type . '/'
+                . $row->id
+                . '/relationships/'
+                . $self->format_type($relationship),
+            related => $self->api_url . '/' . $row_type . '/' . $row->id . '/' . $self->format_type($relationship),
         },
         data => $data,
     };
