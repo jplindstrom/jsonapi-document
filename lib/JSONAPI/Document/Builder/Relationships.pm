@@ -117,12 +117,12 @@ sub build_links_document {
 
     return {
         links => {
-            self => $self->api_url . '/'
+            related => $self->api_url . '/'
                 . $row_type . '/'
                 . $row->id
                 . '/relationships/'
                 . $self->format_type($relationship),
-            related => $self->api_url . '/' . $row_type . '/' . $row->id . '/' . $self->format_type($relationship),
+            self => $self->api_url . '/' . $row_type . '/' . $row->id . '/' . $self->format_type($relationship),
         },
         data => $data,
     };

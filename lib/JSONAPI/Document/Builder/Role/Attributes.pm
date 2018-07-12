@@ -62,6 +62,10 @@ sub get_attributes {
 Takes the keys of the given row and dash cases
 them.
 
+Will not kebab case columns whose names start
+with an underscore, this is to allow private
+properties to be included.
+
 =cut
 
 sub kebab_case {
@@ -69,7 +73,9 @@ sub kebab_case {
     my %new_row;
     foreach my $column (keys(%row)) {
         my $value = $row{$column};
-        $column =~ s/_/-/g;
+        unless ($column =~ m/^_/) {
+            $column =~ s/_/-/g;
+        }
         $new_row{$column} = $value;
     }
     return %new_row;
