@@ -152,11 +152,6 @@ by simply calling C<get_inflated_columns> (the default behaviour).
 
 =head1 ATTRIBUTES
 
-=head2 data_dir
-
-Required; Directory string where this module can store computed document type strings. This should be
-a directory that's ignored by your VCS.
-
 =head2 api_url
 
 Required; An absolute URL pointing to your servers JSON API namespace.
@@ -222,7 +217,11 @@ many_to_many relationships are not supported
 
 =item
 
-only one level of depth is supported (so requesting 'include=comments.likes.author' will throw errors)
+Only one level of depth is supported (so requesting 'include=comments.likes.author' will throw errors)
+
+=item
+
+Are only available through C<compound_resource_document> (not C<resource_document>).
 
 =back
 
@@ -244,10 +243,10 @@ Returns a I<HashRef> with the following structure:
 
 View the resource document specification L<here|http://jsonapi.org/format/#document-resource-objects>.
 
-Uses L<Lingua::EN::Segment|metacpan.org/pod/Lingua::EN::Segment> to set the appropriate type of the
-document. This is a bit expensive, but it ensures that your schema results source name gets hyphenated
-appropriately when converted into its plural form. The resulting type is cached into the C<data_dir>
-to minimize the need to re-compute the document type.
+Uses C<decamelize> from L<Mojo::Util|metacpan.org/pod/Mojo::Util> to parse the
+L<source_name|https://metacpan.org/pod/DBIx::Class::ResultSource#source_name> of the DBIx::Class::Row and
+set the appropriate type of the document. This is used to ensure that your rows source name gets
+hyphenated appropriately when converted into its plural form.
 
 The following options can be given:
 
