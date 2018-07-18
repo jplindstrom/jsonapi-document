@@ -160,8 +160,6 @@ sub build_nested_relationship {
     $options //= {};
     my $builder = JSONAPI::Document::Builder::Relationships->new({
         api_url          => $self->api_url,
-        chi              => $self->chi,
-        segmenter        => $self->segmenter,
         fields           => $fields,
         kebab_case_attrs => $self->kebab_case_attrs,
         row              => $primary_row,

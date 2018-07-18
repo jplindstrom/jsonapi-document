@@ -31,7 +31,7 @@ Main caller method; Builds the resource document for C<row>.
 sub build {
     my ($self) = @_;
     my $row    = $self->row;
-    my $type   = lc($row->result_source->source_name());
+    my $type   = $row->result_source->source_name();
 
     my %document = (
         id         => $row->id(),
@@ -52,8 +52,6 @@ sub build_relationship {
     $options //= {};
     my $builder = JSONAPI::Document::Builder::Relationships->new(
         api_url          => $self->api_url,
-        chi              => $self->chi,
-        segmenter        => $self->segmenter,
         fields           => $fields,
         kebab_case_attrs => $self->kebab_case_attrs,
         row              => $self->row,

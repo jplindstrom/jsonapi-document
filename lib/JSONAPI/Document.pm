@@ -5,10 +5,8 @@ package JSONAPI::Document;
 use Moo;
 
 use Carp ();
-use CHI;
 use JSONAPI::Document::Builder;
 use JSONAPI::Document::Builder::Compound;
-use Lingua::EN::Segment;
 
 has kebab_case_attrs => (
     is      => 'ro',
@@ -21,24 +19,6 @@ has api_url => (
     },
     required => 1,
 );
-
-has data_dir => (
-    is       => 'ro',
-    required => 1,
-);
-
-has chi => (is => 'lazy',);
-
-has segmenter => (is => 'lazy',);
-
-sub _build_chi {
-    my ($self) = @_;
-    return CHI->new(driver => 'File', root_dir => $self->data_dir);
-}
-
-sub _build_segmenter {
-    return Lingua::EN::Segment->new;
-}
 
 sub compound_resource_document {
     my ($self, $row, $options) = @_;
@@ -53,11 +33,9 @@ sub compound_resource_document {
 
     my $builder = JSONAPI::Document::Builder::Compound->new(
         api_url          => $self->api_url,
-        chi              => $self->chi,
         fields           => $fields,
         kebab_case_attrs => $self->kebab_case_attrs,
         row              => $row,
-        segmenter        => $self->segmenter,
         relationships    => \@relationships,
     );
 
@@ -91,11 +69,9 @@ sub resource_document {
 
     my $builder = JSONAPI::Document::Builder->new(
         api_url          => $self->api_url,
-        chi              => $self->chi,
         fields           => $fields,
         kebab_case_attrs => $self->kebab_case_attrs,
         row              => $row,
-        segmenter        => $self->segmenter,
     );
 
     my $document = $builder->build();

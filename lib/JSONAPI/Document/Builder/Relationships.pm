@@ -113,7 +113,7 @@ sub build_links_document {
         }
     }
 
-    my $row_type = $self->document_type(lc($row->result_source->source_name()));
+    my $row_type = $self->document_type($row->result_source->source_name());
 
     return {
         links => {
