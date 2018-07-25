@@ -49,7 +49,12 @@ sub resource_documents {
     my ($self, $resultset, $options) = @_;
     $options //= {};
 
-    my @results = $resultset->all();
+    my @results;
+    if ((ref($resultset) // '') eq 'ARRAY') {
+        @results = @$resultset;
+    } else {
+        @results = $resultset->all();
+    }
     return { data => [map { $self->resource_document($_, $options) } @results], };
 }
 
@@ -286,9 +291,13 @@ that relationship.
 
 =back
 
-=head2 resource_documents(I<DBIx::Class::Row|Object> $row, I<HashRef> $options)
+=head2 resource_documents(I<DBIx::Class::ResultSet|Object|ArrayRef> $resultset, I<HashRef> $options)
 
 Builds the structure for multiple resource documents with a given resultset.
+
+C<$resultset> can be either a C<DBIx::Class::ResultSet> object in which case this method will call
+C<all> on the resultset, an object that extends C<DBIx::Class::ResultSet>, or you can pass in an
+ArrayRef from your own C<all> call.
 
 Returns a I<HashRef> with the following structure:
 
