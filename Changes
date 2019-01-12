@@ -1,5 +1,11 @@
 {{$NEXT}}
 
+2.4       2019-01-12 19:16:45+00:00 Europe/London
+- Reverse values to the link objects self/related URLs, they're now
+defined according to the JSON API spec.
+
+Bug Ticket: https://rt.cpan.org/Ticket/Display.html?id=125937
+
 2.3       2018-07-25 23:32:04+01:00 Europe/London
 - Allow specifying an array reference in resource_documents, this is useful
 when you have situations where "all" is already called on your resultset and
